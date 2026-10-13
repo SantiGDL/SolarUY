@@ -1,0 +1,63 @@
+<Project Sdk="Microsoft.NET.Sdk.Web">
+
+    <PropertyGroup>
+        <TargetFramework>net10.0</TargetFramework>
+        <Nullable>enable</Nullable>
+        <ImplicitUsings>enable</ImplicitUsings>
+    </PropertyGroup>
+
+    <ItemGroup>
+        <PackageReference Include="Microsoft.AspNetCore.OpenApi" Version="10.0.11"/>
+    </ItemGroup>
+
+    <ItemGroup>
+      <Folder Include="Compartido\Aplicacion\Eventos\" />
+      <Folder Include="Compartido\Infraestructura\Eventos\" />
+      <Folder Include="Compartido\Infraestructura\Persistencia\" />
+      <Folder Include="Modulos\Mediciones\Aplicacion\Implementaciones\" />
+      <Folder Include="Modulos\Mediciones\Aplicacion\Servicios\" />
+      <Folder Include="Modulos\Mediciones\Controladores\" />
+      <Folder Include="Modulos\Mediciones\Dominio\" />
+      <Folder Include="Modulos\Mediciones\DTOs\" />
+      <Folder Include="Modulos\Mediciones\Infraestructura\Identidad\" />
+      <Folder Include="Modulos\Mediciones\Infraestructura\Persistencia\" />
+      <Folder Include="Modulos\Mediciones\Interfaz\Apis\Local\" />
+      <Folder Include="Modulos\Mediciones\Interfaz\Apis\Remota\" />
+      <Folder Include="Modulos\Mediciones\Interfaz\Eventos\IN\" />
+      <Folder Include="Modulos\Mediciones\Interfaz\Eventos\OUT\" />
+      <Folder Include="Modulos\Parques\Aplicacion\Implementaciones\" />
+      <Folder Include="Modulos\Parques\Aplicacion\Servicios\" />
+      <Folder Include="Modulos\Parques\Controladores\" />
+      <Folder Include="Modulos\Parques\Dominio\" />
+      <Folder Include="Modulos\Parques\DTOs\" />
+      <Folder Include="Modulos\Parques\Infraestructura\Identidad\" />
+      <Folder Include="Modulos\Parques\Infraestructura\Persistencia\" />
+      <Folder Include="Modulos\Parques\Interfaz\Apis\Local\" />
+      <Folder Include="Modulos\Parques\Interfaz\Apis\Remota\" />
+      <Folder Include="Modulos\Parques\Interfaz\Eventos\IN\" />
+      <Folder Include="Modulos\Parques\Interfaz\Eventos\OUT\" />
+      <Folder Include="Modulos\Tareas\Aplicacion\Implementaciones\" />
+      <Folder Include="Modulos\Tareas\Aplicacion\Servicios\" />
+      <Folder Include="Modulos\Tareas\Controladores\" />
+      <Folder Include="Modulos\Tareas\Dominio\" />
+      <Folder Include="Modulos\Tareas\DTOs\" />
+      <Folder Include="Modulos\Tareas\Infraestructura\Identidad\" />
+      <Folder Include="Modulos\Tareas\Infraestructura\Persistencia\" />
+      <Folder Include="Modulos\Tareas\Interfaz\Apis\Local\" />
+      <Folder Include="Modulos\Tareas\Interfaz\Apis\Remota\" />
+      <Folder Include="Modulos\Tareas\Interfaz\Eventos\IN\" />
+      <Folder Include="Modulos\Tareas\Interfaz\Eventos\OUT\" />
+      <Folder Include="Modulos\Usuarios\Aplicacion\Implementaciones\" />
+      <Folder Include="Modulos\Usuarios\Aplicacion\Servicios\" />
+      <Folder Include="Modulos\Usuarios\Controladores\" />
+      <Folder Include="Modulos\Usuarios\Dominio\" />
+      <Folder Include="Modulos\Usuarios\DTOs\" />
+      <Folder Include="Modulos\Usuarios\Infraestructura\Identidad\" />
+      <Folder Include="Modulos\Usuarios\Infraestructura\Persistencia\" />
+      <Folder Include="Modulos\Usuarios\Interfaz\Apis\Local\" />
+      <Folder Include="Modulos\Usuarios\Interfaz\Apis\Remota\" />
+      <Folder Include="Modulos\Usuarios\Interfaz\Eventos\IN\" />
+      <Folder Include="Modulos\Usuarios\Interfaz\Eventos\OUT\" />
+    </ItemGroup>
+
+</Project>

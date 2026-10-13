@@ -1,2 +1,0 @@
-# SolarUY
-Taller de .NET

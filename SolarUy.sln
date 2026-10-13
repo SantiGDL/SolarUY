@@ -1,0 +1,22 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "SolarUyFont", "SolarUyFont\SolarUyFont.csproj", "{2DBF75D1-F978-4B9B-A43A-B57A686AF172}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "SolarUyBack", "SolarUyBack\SolarUyBack.csproj", "{154DFB6C-222E-40E6-A775-F649075718FE}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{2DBF75D1-F978-4B9B-A43A-B57A686AF172}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{2DBF75D1-F978-4B9B-A43A-B57A686AF172}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{2DBF75D1-F978-4B9B-A43A-B57A686AF172}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{2DBF75D1-F978-4B9B-A43A-B57A686AF172}.Release|Any CPU.Build.0 = Release|Any CPU
+		{154DFB6C-222E-40E6-A775-F649075718FE}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{154DFB6C-222E-40E6-A775-F649075718FE}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{154DFB6C-222E-40E6-A775-F649075718FE}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{154DFB6C-222E-40E6-A775-F649075718FE}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+EndGlobal
