@@ -1,0 +1,17 @@
+# Salidas de compilación y archivos intermedios de .NET
+[Bb]in/
+[Oo]bj/
+
+# Configuración local de Rider y Visual Studio
+.idea/
+.vs/
+*.user
+*.suo
+*.userosscache
+*.sln.docstates
+*.DotSettings.user
+*.sln.iml
+_ReSharper*/
+
+# Resultados generados por las pruebas
+TestResults/

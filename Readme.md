@@ -45,6 +45,12 @@ vacíos para conservar su estructura al incluirlos en un commit y clonar el
 repositorio. SolarUyPruebas contiene carpetas vacías sin marcadores; Git no
 conserva esa estructura por sí sola.
 
+El archivo `.gitignore` excluye las salidas de compilación `bin/` y `obj/`, la
+configuración local de Rider (`.idea/`) y Visual Studio (`.vs/` y preferencias
+personales), y los resultados de pruebas. Estos archivos se mantienen localmente
+y no se incluyen en los commits. La solución, los proyectos, `launchSettings.json`,
+los recursos de `wwwroot/` y los archivos `.gitkeep` sí se versionan.
+
 ## Compilación y verificación
 
 Con el SDK de .NET 10, desde la raíz de la solución:
