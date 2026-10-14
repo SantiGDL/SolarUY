@@ -88,11 +88,11 @@
   "project": {
     "version": "1.0.0",
     "restore": {
-      "projectUniqueName": "/home/santi-kun/RiderProjects/SolarUy/SolarUyBack/SolarUyBack.csproj",
+      "projectUniqueName": "/home/santi-kun/RiderProjects/SolarUY/SolarUyBack/SolarUyBack.csproj",
       "projectName": "SolarUyBack",
-      "projectPath": "/home/santi-kun/RiderProjects/SolarUy/SolarUyBack/SolarUyBack.csproj",
+      "projectPath": "/home/santi-kun/RiderProjects/SolarUY/SolarUyBack/SolarUyBack.csproj",
       "packagesPath": "/home/santi-kun/.nuget/packages/",
-      "outputPath": "/home/santi-kun/RiderProjects/SolarUy/SolarUyBack/obj/",
+      "outputPath": "/home/santi-kun/RiderProjects/SolarUY/SolarUyBack/obj/",
       "projectStyle": "PackageReference",
       "configFilePaths": [
         "/home/santi-kun/.nuget/NuGet/NuGet.Config"

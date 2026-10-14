@@ -1,17 +1,17 @@
 {
   "format": 1,
   "restore": {
-    "/home/santi-kun/RiderProjects/SolarUy/SolarUyBack/SolarUyBack.csproj": {}
+    "/home/santi-kun/RiderProjects/SolarUY/SolarUyBack/SolarUyBack.csproj": {}
   },
   "projects": {
-    "/home/santi-kun/RiderProjects/SolarUy/SolarUyBack/SolarUyBack.csproj": {
+    "/home/santi-kun/RiderProjects/SolarUY/SolarUyBack/SolarUyBack.csproj": {
       "version": "1.0.0",
       "restore": {
-        "projectUniqueName": "/home/santi-kun/RiderProjects/SolarUy/SolarUyBack/SolarUyBack.csproj",
+        "projectUniqueName": "/home/santi-kun/RiderProjects/SolarUY/SolarUyBack/SolarUyBack.csproj",
         "projectName": "SolarUyBack",
-        "projectPath": "/home/santi-kun/RiderProjects/SolarUy/SolarUyBack/SolarUyBack.csproj",
+        "projectPath": "/home/santi-kun/RiderProjects/SolarUY/SolarUyBack/SolarUyBack.csproj",
         "packagesPath": "/home/santi-kun/.nuget/packages/",
-        "outputPath": "/home/santi-kun/RiderProjects/SolarUy/SolarUyBack/obj/",
+        "outputPath": "/home/santi-kun/RiderProjects/SolarUY/SolarUyBack/obj/",
         "projectStyle": "PackageReference",
         "configFilePaths": [
           "/home/santi-kun/.nuget/NuGet/NuGet.Config"
@@ -25,7 +25,6 @@
         },
         "frameworks": {
           "net10.0": {
-            "framework": "net10.0",
             "targetAlias": "net10.0",
             "projectReferences": {}
           }
@@ -44,7 +43,6 @@
       },
       "frameworks": {
         "net10.0": {
-          "framework": "net10.0",
           "targetAlias": "net10.0",
           "dependencies": {
             "Microsoft.AspNetCore.OpenApi": {

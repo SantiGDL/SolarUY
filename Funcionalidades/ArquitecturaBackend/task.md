@@ -1,5 +1,20 @@
 # Tareas para la estructura de carpetas del backend
 
+## Ampliación: conservar Modulos y Compartido en Git
+
+- [x] Revisar la solicitud y las rutas actuales, sin el nivel intermedio Backend.
+- [x] Crear 47 archivos `.gitkeep` vacíos en las subcarpetas vacías de
+  `SolarUyBack/Modulos/` y `SolarUyBack/Compartido/`.
+- [x] Verificar tamaño cero, cobertura de todos los directorios y visibilidad en Git.
+- [x] Ejecutar `dotnet build`: 0 errores y 0 advertencias.
+- [x] Actualizar Readme.md con las rutas y los marcadores verificados.
+
+No existen proyectos de pruebas ni configuración de ArchUnitNET o SonarQube;
+estos controles no se ejecutaron. Los marcadores quedan listos para incluir en
+un commit; esta tarea no realiza commit ni push.
+
+## Entrega inicial
+
 Estado: implementación de la estructura de carpetas completada y verificada por
 solicitud del equipo. No se generaron archivos de código ni proyectos de pruebas.
 

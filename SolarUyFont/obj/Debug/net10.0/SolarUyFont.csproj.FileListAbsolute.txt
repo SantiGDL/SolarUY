@@ -207,9 +207,6 @@
 /home/santi-kun/RiderProjects/SolarUy/SolarUyFont/bin/Debug/net10.0/wwwroot/_framework/icudt_CJK.tjcz0u77k5.dat
 /home/santi-kun/RiderProjects/SolarUy/SolarUyFont/bin/Debug/net10.0/wwwroot/_framework/icudt_EFIGS.tptq2av103.dat
 /home/santi-kun/RiderProjects/SolarUy/SolarUyFont/bin/Debug/net10.0/wwwroot/_framework/icudt_no_CJK.lfu7j35m59.dat
-/home/santi-kun/RiderProjects/SolarUy/SolarUyFont/bin/Debug/net10.0/wwwroot/_framework/SolarUyFont.p8wl3d1cfj.wasm
-/home/santi-kun/RiderProjects/SolarUy/SolarUyFont/bin/Debug/net10.0/wwwroot/_framework/SolarUyFont.ki662tr95g.pdb
-/home/santi-kun/RiderProjects/SolarUy/SolarUyFont/bin/Debug/net10.0/wwwroot/_framework/dotnet.czfbdnu8fl.js
 /home/santi-kun/RiderProjects/SolarUy/SolarUyFont/bin/Debug/net10.0/wwwroot/_framework/blazor.webassembly.w3qd1tpl0e.js.gz
 /home/santi-kun/RiderProjects/SolarUy/SolarUyFont/bin/Debug/net10.0/wwwroot/_framework/Microsoft.AspNetCore.Authorization.286cdd0mnj.wasm.gz
 /home/santi-kun/RiderProjects/SolarUy/SolarUyFont/bin/Debug/net10.0/wwwroot/_framework/Microsoft.AspNetCore.Components.o6y2k6vgc3.wasm.gz
@@ -418,9 +415,6 @@
 /home/santi-kun/RiderProjects/SolarUy/SolarUyFont/bin/Debug/net10.0/wwwroot/_framework/icudt_CJK.tjcz0u77k5.dat.gz
 /home/santi-kun/RiderProjects/SolarUy/SolarUyFont/bin/Debug/net10.0/wwwroot/_framework/icudt_EFIGS.tptq2av103.dat.gz
 /home/santi-kun/RiderProjects/SolarUy/SolarUyFont/bin/Debug/net10.0/wwwroot/_framework/icudt_no_CJK.lfu7j35m59.dat.gz
-/home/santi-kun/RiderProjects/SolarUy/SolarUyFont/bin/Debug/net10.0/wwwroot/_framework/SolarUyFont.p8wl3d1cfj.wasm.gz
-/home/santi-kun/RiderProjects/SolarUy/SolarUyFont/bin/Debug/net10.0/wwwroot/_framework/SolarUyFont.ki662tr95g.pdb.gz
-/home/santi-kun/RiderProjects/SolarUy/SolarUyFont/bin/Debug/net10.0/wwwroot/_framework/dotnet.czfbdnu8fl.js.gz
 /home/santi-kun/RiderProjects/SolarUy/SolarUyFont/bin/Debug/net10.0/SolarUyFont.staticwebassets.runtime.json
 /home/santi-kun/RiderProjects/SolarUy/SolarUyFont/bin/Debug/net10.0/SolarUyFont.staticwebassets.endpoints.json
 /home/santi-kun/RiderProjects/SolarUy/SolarUyFont/bin/Debug/net10.0/SolarUyFont.dll
@@ -852,7 +846,6 @@
 /home/santi-kun/RiderProjects/SolarUy/SolarUyFont/obj/Debug/net10.0/SolarUyFont.genruntimeconfig.cache
 /home/santi-kun/RiderProjects/SolarUy/SolarUyFont/obj/Debug/net10.0/blazor.build.boot-extension.json
 /home/santi-kun/RiderProjects/SolarUy/SolarUyFont/obj/Debug/net10.0/dotnet.js
-/home/santi-kun/RiderProjects/SolarUy/SolarUyFont/obj/Debug/net10.0/staticwebassets/htmlassetplaceholders/build/lsacxhthoo.html
 /home/santi-kun/RiderProjects/SolarUy/SolarUyFont/obj/Debug/net10.0/compressed/f9o902iofb-{0}-99zm1jdh75-99zm1jdh75.gz
 /home/santi-kun/RiderProjects/SolarUy/SolarUyFont/obj/Debug/net10.0/compressed/cxwnqkusqu-{0}-a7v4xqqbca-a7v4xqqbca.gz
 /home/santi-kun/RiderProjects/SolarUy/SolarUyFont/obj/Debug/net10.0/compressed/u5a8togbrj-{0}-bqjiyaj88i-bqjiyaj88i.gz
@@ -1110,10 +1103,6 @@
 /home/santi-kun/RiderProjects/SolarUy/SolarUyFont/obj/Debug/net10.0/compressed/yzrko4aarr-{0}-tjcz0u77k5-tjcz0u77k5.gz
 /home/santi-kun/RiderProjects/SolarUy/SolarUyFont/obj/Debug/net10.0/compressed/u90ftlx88p-{0}-tptq2av103-tptq2av103.gz
 /home/santi-kun/RiderProjects/SolarUy/SolarUyFont/obj/Debug/net10.0/compressed/a4ygu9nqsk-{0}-lfu7j35m59-lfu7j35m59.gz
-/home/santi-kun/RiderProjects/SolarUy/SolarUyFont/obj/Debug/net10.0/compressed/oynsq4vxft-{0}-p8wl3d1cfj-p8wl3d1cfj.gz
-/home/santi-kun/RiderProjects/SolarUy/SolarUyFont/obj/Debug/net10.0/compressed/mhkptwbvj0-{0}-ki662tr95g-ki662tr95g.gz
-/home/santi-kun/RiderProjects/SolarUy/SolarUyFont/obj/Debug/net10.0/compressed/njz5iy9vka-{0}-czfbdnu8fl-czfbdnu8fl.gz
-/home/santi-kun/RiderProjects/SolarUy/SolarUyFont/obj/Debug/net10.0/compressed/frmwz8ocvm-{0}-9jcbwtce2y-9jcbwtce2y.gz
 /home/santi-kun/RiderProjects/SolarUy/SolarUyFont/obj/Debug/net10.0/staticwebassets.build.json
 /home/santi-kun/RiderProjects/SolarUy/SolarUyFont/obj/Debug/net10.0/staticwebassets.build.json.cache
 /home/santi-kun/RiderProjects/SolarUy/SolarUyFont/obj/Debug/net10.0/staticwebassets.development.json
@@ -1124,3 +1113,15 @@
 /home/santi-kun/RiderProjects/SolarUy/SolarUyFont/obj/Debug/net10.0/refint/SolarUyFont.dll
 /home/santi-kun/RiderProjects/SolarUy/SolarUyFont/obj/Debug/net10.0/SolarUyFont.pdb
 /home/santi-kun/RiderProjects/SolarUy/SolarUyFont/obj/Debug/net10.0/ref/SolarUyFont.dll
+/home/santi-kun/RiderProjects/SolarUY/SolarUyFont/bin/Debug/net10.0/wwwroot/_framework/SolarUyFont.il1yhwlvp1.wasm
+/home/santi-kun/RiderProjects/SolarUY/SolarUyFont/bin/Debug/net10.0/wwwroot/_framework/SolarUyFont.mrw3buhdzx.pdb
+/home/santi-kun/RiderProjects/SolarUY/SolarUyFont/bin/Debug/net10.0/wwwroot/_framework/dotnet.t4d1qhjpia.js
+/home/santi-kun/RiderProjects/SolarUY/SolarUyFont/bin/Debug/net10.0/wwwroot/_framework/SolarUyFont.il1yhwlvp1.wasm.gz
+/home/santi-kun/RiderProjects/SolarUY/SolarUyFont/bin/Debug/net10.0/wwwroot/_framework/SolarUyFont.mrw3buhdzx.pdb.gz
+/home/santi-kun/RiderProjects/SolarUY/SolarUyFont/bin/Debug/net10.0/wwwroot/_framework/dotnet.t4d1qhjpia.js.gz
+/home/santi-kun/RiderProjects/SolarUY/SolarUyFont/obj/Debug/net10.0/SolarUyFont.sourcelink.json
+/home/santi-kun/RiderProjects/SolarUY/SolarUyFont/obj/Debug/net10.0/staticwebassets/htmlassetplaceholders/build/6v1zbi3sjk.html
+/home/santi-kun/RiderProjects/SolarUY/SolarUyFont/obj/Debug/net10.0/compressed/oynsq4vxft-{0}-il1yhwlvp1-il1yhwlvp1.gz
+/home/santi-kun/RiderProjects/SolarUY/SolarUyFont/obj/Debug/net10.0/compressed/mhkptwbvj0-{0}-mrw3buhdzx-mrw3buhdzx.gz
+/home/santi-kun/RiderProjects/SolarUY/SolarUyFont/obj/Debug/net10.0/compressed/njz5iy9vka-{0}-t4d1qhjpia-t4d1qhjpia.gz
+/home/santi-kun/RiderProjects/SolarUY/SolarUyFont/obj/Debug/net10.0/compressed/frmwz8ocvm-{0}-g9g59a91kj-g9g59a91kj.gz

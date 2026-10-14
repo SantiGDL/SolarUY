@@ -5,7 +5,7 @@ var e=!1;const t=async()=>WebAssembly.validate(new Uint8Array([0,97,115,109,1,0,
   "mainAssemblyName": "SolarUyFont",
   "applicationEnvironment": "Development",
   "resources": {
-    "hash": "sha256-Mpf3iJjhEzAOX5XTGO4Wjgt9XcPKPoxlAUZP7ejKVOo=",
+    "hash": "sha256-UcFJh7uRaj2tFW1lGIwfq0FRLzjD2aedFeOxSZqFQfY=",
     "jsModuleNative": [
       {
         "name": "dotnet.native.vzj2a6aakt.js"
@@ -1242,16 +1242,16 @@ var e=!1;const t=async()=>WebAssembly.validate(new Uint8Array([0,97,115,109,1,0,
       },
       {
         "virtualPath": "SolarUyFont.wasm",
-        "name": "SolarUyFont.p8wl3d1cfj.wasm",
-        "hash": "sha256-hyJUST9CPbn6jPmZbURPvBImIjYfc0sae9TD/maoJzA=",
+        "name": "SolarUyFont.il1yhwlvp1.wasm",
+        "hash": "sha256-ln3zdRjDfWgMsZoOoIE2GmN8k6NlcVaFcF08r5uASiI=",
         "cache": "force-cache"
       }
     ],
     "pdb": [
       {
         "virtualPath": "SolarUyFont.pdb",
-        "name": "SolarUyFont.ki662tr95g.pdb",
-        "hash": "sha256-fCzofSL2G9BpaZZFGK8DqpifPwt9/0LaHgH62gypbfU=",
+        "name": "SolarUyFont.mrw3buhdzx.pdb",
+        "hash": "sha256-XsQTdHGelFm3cXHtQEhp2tBRsdChVmTwS3AlGnBLXag=",
         "cache": "force-cache"
       }
     ],

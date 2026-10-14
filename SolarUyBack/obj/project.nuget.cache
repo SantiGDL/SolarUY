@@ -1,8 +1,8 @@
 {
   "version": 2,
-  "dgSpecHash": "yyRY/F9ybno=",
+  "dgSpecHash": "4Lk1Kwv0z0M=",
   "success": true,
-  "projectFilePath": "/home/santi-kun/RiderProjects/SolarUy/SolarUyBack/SolarUyBack.csproj",
+  "projectFilePath": "/home/santi-kun/RiderProjects/SolarUY/SolarUyBack/SolarUyBack.csproj",
   "expectedPackageFiles": [
     "/home/santi-kun/.nuget/packages/microsoft.aspnetcore.openapi/10.0.11/microsoft.aspnetcore.openapi.10.0.11.nupkg.sha512",
     "/home/santi-kun/.nuget/packages/microsoft.openapi/2.7.5/microsoft.openapi.2.7.5.nupkg.sha512"

@@ -17,45 +17,45 @@ build_property.EnforceExtendedAnalyzerRules =
 build_property._SupportedPlatformList = browser
 build_property.RootNamespace = SolarUy
 build_property.RootNamespace = SolarUy
-build_property.ProjectDir = /home/santi-kun/RiderProjects/SolarUy/SolarUyFont/
+build_property.ProjectDir = /home/santi-kun/RiderProjects/SolarUY/SolarUyFont/
 build_property.EnableComHosting = 
 build_property.EnableGeneratedComInterfaceComImportInterop = false
 build_property.RazorLangVersion = 9.0
 build_property.SupportLocalizedComponentNames = 
 build_property.GenerateRazorMetadataSourceChecksumAttributes = 
-build_property.MSBuildProjectDirectory = /home/santi-kun/RiderProjects/SolarUy/SolarUyFont
+build_property.MSBuildProjectDirectory = /home/santi-kun/RiderProjects/SolarUY/SolarUyFont
 build_property._RazorSourceGeneratorDebug = 
 build_property.EffectiveAnalysisLevelStyle = 10.0
 build_property.EnableCodeStyleSeverity = 
 
-[/home/santi-kun/RiderProjects/SolarUy/SolarUyFont/App.razor]
+[/home/santi-kun/RiderProjects/SolarUY/SolarUyFont/App.razor]
 build_metadata.AdditionalFiles.TargetPath = QXBwLnJhem9y
 build_metadata.AdditionalFiles.CssScope = 
 
-[/home/santi-kun/RiderProjects/SolarUy/SolarUyFont/Pages/Counter.razor]
+[/home/santi-kun/RiderProjects/SolarUY/SolarUyFont/Pages/Counter.razor]
 build_metadata.AdditionalFiles.TargetPath = UGFnZXMvQ291bnRlci5yYXpvcg==
 build_metadata.AdditionalFiles.CssScope = 
 
-[/home/santi-kun/RiderProjects/SolarUy/SolarUyFont/Pages/Home.razor]
+[/home/santi-kun/RiderProjects/SolarUY/SolarUyFont/Pages/Home.razor]
 build_metadata.AdditionalFiles.TargetPath = UGFnZXMvSG9tZS5yYXpvcg==
 build_metadata.AdditionalFiles.CssScope = 
 
-[/home/santi-kun/RiderProjects/SolarUy/SolarUyFont/Pages/NotFound.razor]
+[/home/santi-kun/RiderProjects/SolarUY/SolarUyFont/Pages/NotFound.razor]
 build_metadata.AdditionalFiles.TargetPath = UGFnZXMvTm90Rm91bmQucmF6b3I=
 build_metadata.AdditionalFiles.CssScope = 
 
-[/home/santi-kun/RiderProjects/SolarUy/SolarUyFont/Pages/Weather.razor]
+[/home/santi-kun/RiderProjects/SolarUY/SolarUyFont/Pages/Weather.razor]
 build_metadata.AdditionalFiles.TargetPath = UGFnZXMvV2VhdGhlci5yYXpvcg==
 build_metadata.AdditionalFiles.CssScope = 
 
-[/home/santi-kun/RiderProjects/SolarUy/SolarUyFont/_Imports.razor]
+[/home/santi-kun/RiderProjects/SolarUY/SolarUyFont/_Imports.razor]
 build_metadata.AdditionalFiles.TargetPath = X0ltcG9ydHMucmF6b3I=
 build_metadata.AdditionalFiles.CssScope = 
 
-[/home/santi-kun/RiderProjects/SolarUy/SolarUyFont/Layout/MainLayout.razor]
+[/home/santi-kun/RiderProjects/SolarUY/SolarUyFont/Layout/MainLayout.razor]
 build_metadata.AdditionalFiles.TargetPath = TGF5b3V0L01haW5MYXlvdXQucmF6b3I=
 build_metadata.AdditionalFiles.CssScope = b-a6mow5kw14
 
-[/home/santi-kun/RiderProjects/SolarUy/SolarUyFont/Layout/NavMenu.razor]
+[/home/santi-kun/RiderProjects/SolarUY/SolarUyFont/Layout/NavMenu.razor]
 build_metadata.AdditionalFiles.TargetPath = TGF5b3V0L05hdk1lbnUucmF6b3I=
 build_metadata.AdditionalFiles.CssScope = b-8b4fmcm2pl

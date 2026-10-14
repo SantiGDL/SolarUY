@@ -31,3 +31,4 @@
 /home/santi-kun/RiderProjects/SolarUy/SolarUyBack/obj/Debug/net10.0/SolarUyBack.pdb
 /home/santi-kun/RiderProjects/SolarUy/SolarUyBack/obj/Debug/net10.0/SolarUyBack.genruntimeconfig.cache
 /home/santi-kun/RiderProjects/SolarUy/SolarUyBack/obj/Debug/net10.0/ref/SolarUyBack.dll
+/home/santi-kun/RiderProjects/SolarUY/SolarUyBack/obj/Debug/net10.0/SolarUyBack.sourcelink.json

@@ -1,5 +1,20 @@
 # Diseño de la estructura de carpetas del backend
 
+## Ampliación autorizada: archivos marcadores
+
+Recorrer las carpetas actuales `SolarUyBack/Modulos/` y `SolarUyBack/Compartido/`
+y crear un `.gitkeep` de cero bytes en cada subcarpeta vacía. Los archivos en las
+carpetas finales permiten que Git conserve también sus directorios padres.
+No mover carpetas ni modificar código, proyectos o dependencias.
+
+Verificar que cada directorio tenga algún archivo descendiente, que los nuevos
+marcadores estén vacíos y que aparezcan entre los archivos no ignorados por Git.
+Ejecutar `dotnet build` desde la raíz. Esta ampliación reemplaza la prohibición
+de marcadores de la entrega inicial para las dos rutas indicadas; el árbol
+original siguiente corresponde a la entrega inicial, con el nivel Backend.
+
+## Entrega inicial
+
 Estado: estructura de carpetas implementada y verificada por solicitud del equipo.
 Las carpetas están vacías; las responsabilidades descritas orientan su uso futuro.
 

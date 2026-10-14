@@ -2141,11 +2141,11 @@
   "project": {
     "version": "1.0.0",
     "restore": {
-      "projectUniqueName": "/home/santi-kun/RiderProjects/SolarUy/SolarUyFont/SolarUyFont.csproj",
+      "projectUniqueName": "/home/santi-kun/RiderProjects/SolarUY/SolarUyFont/SolarUyFont.csproj",
       "projectName": "SolarUyFont",
-      "projectPath": "/home/santi-kun/RiderProjects/SolarUy/SolarUyFont/SolarUyFont.csproj",
+      "projectPath": "/home/santi-kun/RiderProjects/SolarUY/SolarUyFont/SolarUyFont.csproj",
       "packagesPath": "/home/santi-kun/.nuget/packages/",
-      "outputPath": "/home/santi-kun/RiderProjects/SolarUy/SolarUyFont/obj/",
+      "outputPath": "/home/santi-kun/RiderProjects/SolarUY/SolarUyFont/obj/",
       "projectStyle": "PackageReference",
       "configFilePaths": [
         "/home/santi-kun/.nuget/NuGet/NuGet.Config"

@@ -1,5 +1,19 @@
 # Estructura de carpetas del backend
 
+## Ampliación autorizada: conservar la estructura en Git
+
+El equipo solicita archivos vacíos en las carpetas existentes de
+`SolarUyBack/Modulos/` y `SolarUyBack/Compartido/` para poder versionarlas.
+Crear un `.gitkeep` vacío en cada subcarpeta vacía, conservando las rutas actuales
+y los archivos existentes. Verificar que Git detecte los marcadores y que todas
+las carpetas queden representadas. No realizar commit ni push en esta tarea.
+
+Esta solicitud sustituye, para esas dos rutas, la exclusión de archivos marcadores
+de la entrega inicial descrita a continuación. SolarUyPruebas queda fuera de esta
+ampliación. Las rutas actuales no incluyen el nivel intermedio Backend.
+
+## Entrega inicial
+
 Estado: implementado y verificado por solicitud del equipo. Cumplidos los criterios
 de aceptación de la estructura de carpetas; no se implementó código de los módulos.
 
