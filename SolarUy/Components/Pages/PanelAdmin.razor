@@ -1,0 +1,41 @@
+﻿@page "/admin"
+@layout MainLayout
+
+<PageTitle>SolarUy | Panel administrativo</PageTitle>
+
+<section class="admin-hero" aria-labelledby="panel-title">
+    <div>
+        <p class="eyebrow">PANEL ADMINISTRATIVO</p>
+        <h1 id="panel-title">Panel de gestión <span>SolarUy</span></h1>
+        <p class="hero-description">Supervisá tus parques solares, consultá la producción y organizá el mantenimiento desde una única plataforma.</p>
+    </div>
+    <div class="hero-status"><span class="status-dot"></span>Vista preliminar<span>Las funciones de gestión estarán disponibles próximamente.</span></div>
+</section>
+
+<section class="summary-grid" aria-label="Resumen de la plataforma">
+    <article class="summary-card"><img src="images/IconoPanelSolar.png" alt="" /><div><strong>Sin datos</strong><h2>Parques activos</h2><p>Información no disponible</p></div></article>
+    <article class="summary-card"><img src="images/IconoProduccion.png" alt="" /><div><strong>Sin datos</strong><h2>Producción actual</h2><p>Sin mediciones registradas</p></div></article>
+    <article class="summary-card"><img src="images/IconoTareas.png" alt="" /><div><strong>Sin datos</strong><h2>Tareas pendientes</h2><p>Información no disponible</p></div></article>
+</section>
+
+<section class="admin-card quick-section" aria-labelledby="quick-title">
+    <p class="eyebrow">ACCESOS RÁPIDOS</p>
+    <h2 id="quick-title">Gestión diaria de tu plataforma</h2>
+    <div class="quick-grid">
+        <button type="button" class="quick-card" disabled><img src="images/IconoPanelSolar.png" alt="" /><strong>Gestionar parques</strong><span>Visualizá y administrá tus parques solares.</span><small>Próximamente</small></button>
+        <button type="button" class="quick-card" disabled><img src="images/IconoProduccion.png" alt="" /><strong>Ver producción</strong><span>Consultá la generación de energía de tus parques.</span><small>Próximamente</small></button>
+        <button type="button" class="quick-card" disabled><img src="images/IconoTareas.png" alt="" /><strong>Gestionar tareas</strong><span>Organizá y seguí las tareas de mantenimiento.</span><small>Próximamente</small></button>
+        <button type="button" class="quick-card" disabled><img src="images/IconoReportes.png" alt="" /><strong>Reportes</strong><span>Consultá la información y el rendimiento de tus parques.</span><small>Próximamente</small></button>
+    </div>
+</section>
+
+<div class="detail-grid">
+    <section class="admin-card activity" aria-labelledby="activity-title">
+        <div class="section-heading"><h2 class="eyebrow" id="activity-title">ACTIVIDAD RECIENTE</h2><button type="button" class="text-control" disabled>Ver todas</button></div>
+        <div class="empty-state"><img src="images/IconoTareas.png" alt="" /><h3>Todavía no hay actividad</h3><p>Acá podrás consultar las novedades de tus parques y tareas cuando la gestión esté disponible.</p></div>
+    </section>
+    <section class="admin-card production" aria-labelledby="production-title">
+        <div class="section-heading"><h2 class="eyebrow" id="production-title">PRODUCCIÓN DE ENERGÍA</h2><select aria-label="Período de la gráfica, próximamente" disabled><option>Últimos 7 días</option></select></div>
+        <figure><img src="images/GraficaMockup.png" alt="Ejemplo visual de una gráfica de producción de energía; las cifras de la imagen no son datos reales." /><figcaption>Gráfica ilustrativa, sin datos reales</figcaption></figure>
+    </section>
+</div>

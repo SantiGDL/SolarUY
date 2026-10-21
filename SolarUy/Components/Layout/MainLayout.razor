@@ -1,23 +1,22 @@
 ﻿@inherits LayoutComponentBase
 
-<div class="page">
-    <div class="sidebar">
-        <NavMenu/>
+<div class="admin-shell">
+    <aside class="admin-sidebar"><NavMenu /></aside>
+    <div class="admin-workspace">
+        <header class="admin-header">
+            <input class="admin-search" type="search" placeholder="Buscar parques, tareas, reportes..." aria-label="Búsqueda, próximamente" disabled />
+            <div class="admin-identity">
+                <span class="avatar" aria-hidden="true">AD</span>
+                <div><strong>Admin</strong><small>Vista provisional · Sin sesión real</small></div>
+                <button class="logout" type="button" disabled>Cerrar sesión</button>
+            </div>
+        </header>
+        <main class="admin-content">@Body</main>
     </div>
-
-    <main>
-        <div class="top-row px-4">
-            <a href="https://learn.microsoft.com/aspnet/core/" target="_blank">About</a>
-        </div>
-
-        <article class="content px-4">
-            @Body
-        </article>
-    </main>
 </div>
 
 <div id="blazor-error-ui" data-nosnippet>
-    An unhandled error has occurred.
-    <a href="." class="reload">Reload</a>
-    <span class="dismiss">🗙</span>
+    Ocurrió un error inesperado.
+    <a href="." class="reload">Recargar</a>
+    <button type="button" class="dismiss" aria-label="Cerrar aviso">×</button>
 </div>

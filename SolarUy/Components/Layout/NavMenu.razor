@@ -1,29 +1,17 @@
-﻿<div class="top-row ps-3 navbar navbar-dark">
-    <div class="container-fluid">
-        <a class="navbar-brand" href="">SolarUy</a>
-    </div>
-</div>
-
-<input type="checkbox" title="Navigation menu" class="navbar-toggler"/>
-
-<div class="nav-scrollable" onclick="document.querySelector('.navbar-toggler').click()">
-    <nav class="nav flex-column">
-        <div class="nav-item px-3">
-            <NavLink class="nav-link" href="" Match="NavLinkMatch.All">
-                <span class="bi bi-house-door-fill-nav-menu" aria-hidden="true"></span> Home
-            </NavLink>
-        </div>
-
-        <div class="nav-item px-3">
-            <NavLink class="nav-link" href="counter">
-                <span class="bi bi-plus-square-fill-nav-menu" aria-hidden="true"></span> Counter
-            </NavLink>
-        </div>
-
-        <div class="nav-item px-3">
-            <NavLink class="nav-link" href="weather">
-                <span class="bi bi-list-nested-nav-menu" aria-hidden="true"></span> Weather
-            </NavLink>
-        </div>
-    </nav>
+﻿<div class="sidebar-inner">
+    <a class="sidebar-brand" href="/" aria-label="SolarUy, volver al inicio">
+        <img src="solaruy-logo.png" alt="SolarUy" />
+    </a>
+    <details class="sidebar-menu" open>
+        <summary>Menú de navegación</summary>
+        <nav aria-label="Navegación del panel">
+            <a href="/" class="sidebar-link"><span class="home-symbol" aria-hidden="true">⌂</span>Inicio</a>
+            <button type="button" disabled><img src="images/IconoPanelSolar.png" alt="" />Parques</button>
+            <button type="button" disabled><img src="images/IconoProduccion.png" alt="" />Producción</button>
+            <button type="button" disabled><img src="images/IconoTareas.png" alt="" />Tareas</button>
+            <button type="button" disabled><img src="images/IconoReportes.png" alt="" />Reportes</button>
+        </nav>
+    </details>
+    <div class="sidebar-message"><p>Energía solar.<br />Más control.<br />Mayor impacto.</p><span></span></div>
+    <div class="sidebar-footer">SolarUy <span>Vista preliminar</span></div>
 </div>

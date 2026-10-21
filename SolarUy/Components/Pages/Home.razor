@@ -1,7 +1,56 @@
 ﻿@page "/"
+@page "/Home"
+@layout HomeLayout
 
-<PageTitle>Home</PageTitle>
+<PageTitle>SolarUy | Inicio</PageTitle>
 
-<h1>Hello, world!</h1>
+<section class="solar-hero" aria-labelledby="hero-title">
+    <div class="hero-inner">
+        <div class="hero-copy">
+            <p class="eyebrow">ENERGÍA SOLAR. MÁS CONTROL. MAYOR IMPACTO.</p>
+            <h1 id="hero-title">Gestioná tu energía solar de forma <span>simple</span></h1>
+            <p class="hero-description">Una plataforma pensada para monitorear la producción, organizar el mantenimiento y centralizar la información de tus parques solares.</p>
+            <div class="hero-actions">
+                <div class="panel-access">
+                    <a class="action action-primary" href="/admin">Ingresar al panel</a>
+                </div>
+                <button class="action action-secondary" type="button" disabled>
+                    <img src="images/IconoConocer.png" alt="" />
+                    Conocer la plataforma
+                </button>
+            </div>
+        </div>
+        <figure class="dashboard-preview">
+            <img src="images/DashboardAdmin.png" alt="Diseño ilustrativo del futuro dashboard de SolarUy, con menú lateral, tarjetas de gestión y gráfico de producción. No contiene datos reales." />
+            <figcaption>Vista ilustrativa del futuro panel administrativo</figcaption>
+        </figure>
+    </div>
+</section>
 
-Welcome to your new app.
+<section class="solar-modules" aria-labelledby="modules-title">
+    <p class="eyebrow">MÓDULOS PRINCIPALES</p>
+    <h2 id="modules-title">Todo lo que necesitás, en un solo lugar</h2>
+    <p class="section-description">Una plataforma sencilla para la gestión de tus parques solares.</p>
+    <div class="module-grid">
+        <article class="module-card">
+            <img src="images/IconoPanelSolar.png" alt="" />
+            <h3>Parques solares</h3>
+            <p>Administración de parques, nodos y paneles solares y sus características.</p>
+        </article>
+        <article class="module-card">
+            <img src="images/IconoProduccion.png" alt="" />
+            <h3>Producción</h3>
+            <p>Monitoreo de la generación de energía y consulta de información histórica.</p>
+        </article>
+        <article class="module-card">
+            <img src="images/IconoTareas.png" alt="" />
+            <h3>Tareas</h3>
+            <p>Organización y seguimiento de las tareas de mantenimiento de los paneles.</p>
+        </article>
+        <article class="module-card">
+            <img src="images/IconoReportes.png" alt="" />
+            <h3>Reportes</h3>
+            <p>Consulta de información sobre la producción y el funcionamiento de los parques.</p>
+        </article>
+    </div>
+</section>

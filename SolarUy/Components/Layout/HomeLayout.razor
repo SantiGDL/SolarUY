@@ -1,0 +1,34 @@
+﻿@inherits LayoutComponentBase
+
+<div class="home-shell">
+    <header class="home-header">
+        <div class="header-inner">
+            <a class="brand-link" href="/" aria-label="SolarUy, volver al inicio"><img class="brand" src="solaruy-logo.png" alt="SolarUy" /></a>
+            <nav class="home-nav" aria-label="Navegación principal">
+                <a class="current" href="/">Inicio</a>
+                <button type="button" disabled>Plataforma</button>
+                <button type="button" disabled>Contacto</button>
+            </nav>
+            <div class="panel-access">
+                <a class="panel-button" href="/admin">Ingresar al panel</a>
+            </div>
+        </div>
+    </header>
+
+    <main>@Body</main>
+
+    <footer class="home-footer">
+        <div class="footer-inner">
+            <div class="footer-brand">
+                <span>Solar<span class="solar-yellow">Uy</span></span>
+                <p>Un futuro más limpio y eficiente<br />a través de la tecnología solar.</p>
+            </div>
+            <nav aria-label="Navegación del pie de página">
+                <button type="button" disabled>Inicio</button>
+                <button type="button" disabled>Plataforma</button>
+                <button type="button" disabled>Contacto</button>
+            </nav>
+        </div>
+        <div class="footer-bottom">© @DateTime.Now.Year SolarUy · Proyecto académico</div>
+    </footer>
+</div>
