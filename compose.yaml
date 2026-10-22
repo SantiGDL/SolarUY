@@ -1,0 +1,44 @@
+services:
+  mysql:
+    image: mysql:8.4
+    environment:
+      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD:?Define MYSQL_ROOT_PASSWORD in .env}
+      MYSQL_DATABASE: solaruy
+      MYSQL_USER: ${MYSQL_USER:-solaruy_app}
+      MYSQL_PASSWORD: ${MYSQL_PASSWORD:?Define MYSQL_PASSWORD in .env}
+    ports:
+      - "3306:3306"
+    volumes:
+      - solaruy_mysql_data:/var/lib/mysql
+    healthcheck:
+      test: ["CMD-SHELL", "mysqladmin ping -h 127.0.0.1 -uroot -p$${MYSQL_ROOT_PASSWORD} --silent"]
+      interval: 5s
+      timeout: 5s
+      retries: 20
+
+  preparar-volumen-keycloak:
+    image: busybox:1.36
+    user: "0:0"
+    command: ["sh", "-c", "chown -R 1000:0 /data && chmod -R g+rwX /data"]
+    volumes:
+      - solaruy_keycloak_data:/data
+
+  keycloak:
+    image: quay.io/keycloak/keycloak:26.8.1
+    command: ["start-dev", "--import-realm"]
+    depends_on:
+      preparar-volumen-keycloak:
+        condition: service_completed_successfully
+    environment:
+      KC_BOOTSTRAP_ADMIN_USERNAME: ${KEYCLOAK_BOOTSTRAP_ADMIN:?Define KEYCLOAK_BOOTSTRAP_ADMIN in .env}
+      KC_BOOTSTRAP_ADMIN_PASSWORD: ${KEYCLOAK_BOOTSTRAP_PASSWORD:?Define KEYCLOAK_BOOTSTRAP_PASSWORD in .env}
+      KC_HEALTH_ENABLED: "true"
+    ports:
+      - "8080:8080"
+    volumes:
+      - ./SolarUyKeycloak/solaruy-realm.json:/opt/keycloak/data/import/solaruy-realm.json:ro
+      - solaruy_keycloak_data:/opt/keycloak/data/h2
+
+volumes:
+  solaruy_mysql_data:
+  solaruy_keycloak_data:

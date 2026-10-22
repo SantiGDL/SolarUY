@@ -1,0 +1,51 @@
+{
+  "realm": "solaruy",
+  "enabled": true,
+  "roles": {
+    "realm": [
+      {
+        "name": "ADMIN",
+        "description": "Puede registrar parques solares."
+      }
+    ]
+  },
+  "clients": [
+    {
+      "clientId": "solaruy",
+      "name": "SolarUy Blazor Server",
+      "enabled": true,
+      "protocol": "openid-connect",
+      "publicClient": true,
+      "standardFlowEnabled": true,
+      "directAccessGrantsEnabled": false,
+      "implicitFlowEnabled": false,
+      "redirectUris": [
+        "http://localhost:5058/signin-oidc",
+        "https://localhost:7196/signin-oidc"
+      ],
+      "webOrigins": [
+        "http://localhost:5058",
+        "https://localhost:7196"
+      ],
+      "attributes": {
+        "pkce.code.challenge.method": "S256"
+      },
+      "protocolMappers": [
+        {
+          "name": "realm-roles-for-solaruy",
+          "protocol": "openid-connect",
+          "protocolMapper": "oidc-usermodel-realm-role-mapper",
+          "consentRequired": false,
+          "config": {
+            "claim.name": "roles",
+            "jsonType.label": "String",
+            "multivalued": "true",
+            "id.token.claim": "true",
+            "access.token.claim": "true",
+            "userinfo.token.claim": "true"
+          }
+        }
+      ]
+    }
+  ]
+}

@@ -5,11 +5,18 @@
     <div class="admin-workspace">
         <header class="admin-header">
             <input class="admin-search" type="search" placeholder="Buscar parques, tareas, reportes..." aria-label="Búsqueda, próximamente" disabled />
-            <div class="admin-identity">
-                <span class="avatar" aria-hidden="true">AD</span>
-                <div><strong>Admin</strong><small>Vista provisional · Sin sesión real</small></div>
-                <button class="logout" type="button" disabled>Cerrar sesión</button>
-            </div>
+            <AuthorizeView>
+                <Authorized Context="usuario">
+                    <div class="admin-identity">
+                        <span class="avatar" aria-hidden="true">@(usuario.User.Identity?.Name?.FirstOrDefault().ToString() ?? "U")</span>
+                        <div><strong>@usuario.User.Identity?.Name</strong><small>Sesión autenticada</small></div>
+                        <form method="post" action="/logout">
+                            <AntiforgeryToken />
+                            <button class="logout" type="submit">Cerrar sesión</button>
+                        </form>
+                    </div>
+                </Authorized>
+            </AuthorizeView>
         </header>
         <main class="admin-content">@Body</main>
     </div>

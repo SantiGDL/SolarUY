@@ -15,3 +15,8 @@ _ReSharper*/
 
 # Resultados generados por las pruebas
 TestResults/
+
+# Configuración y secretos locales
+.env
+.env.*
+!.env.example
