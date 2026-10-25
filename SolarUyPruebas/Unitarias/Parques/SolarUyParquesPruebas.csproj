@@ -19,7 +19,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\..\..\SolarUy\SolarUy.csproj" />
+    <ProjectReference Include="..\..\..\SolarUy\SolarUy\SolarUy.csproj" />
   </ItemGroup>
 
 </Project>

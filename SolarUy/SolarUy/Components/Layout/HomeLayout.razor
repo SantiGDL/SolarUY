@@ -1,0 +1,23 @@
+﻿@inherits LayoutComponentBase
+<div class="home-shell">
+    <header class="home-header">
+        <a href="/" class="brand" aria-label="SolarUy — Inicio"><img src="solaruy-logo.png" alt="SolarUy" /></a>
+        <nav aria-label="Navegación principal">
+            <a href="/" class="current">Inicio</a>
+            <button type="button" disabled>Plataforma</button>
+            <button type="button" disabled>Contacto</button>
+        </nav>
+        <a class="panel-link" href="/admin" data-enhance-nav="false">Ingresar al panel <span aria-hidden="true">→</span></a>
+    </header>
+    <main id="contenido">@Body</main>
+    <footer class="home-footer">
+        <div class="footer-content">
+            <strong>Solar<span>Uy</span></strong>
+            <p>Más control de tu energía.<br />Una plataforma para tus parques solares.</p>
+            <nav aria-label="Navegación del pie">
+                <button disabled>Inicio</button><button disabled>Plataforma</button><button disabled>Contacto</button>
+            </nav>
+        </div>
+        <div class="footer-bottom"><span>SolarUy · Gestión de parques solares</span><span>Energía solar para un mañana mejor.</span></div>
+    </footer>
+</div>

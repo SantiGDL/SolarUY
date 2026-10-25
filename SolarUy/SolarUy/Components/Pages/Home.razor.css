@@ -1,0 +1,13 @@
+﻿.hero{background:linear-gradient(90deg,rgba(247,251,255,.98),rgba(238,247,255,.88) 40%,rgba(232,244,255,.22)),url('/solar-hero.png') center/cover}
+.hero-inner{max-width:1440px;margin:auto;padding:56px 6% 40px;display:grid;grid-template-columns:1fr 1.12fr;gap:36px;align-items:center}
+.eyebrow{color:#0064ec;text-transform:uppercase;letter-spacing:2px;font-size:13px;font-weight:800}
+h1{font-size:clamp(36px,3.5vw,54px);line-height:1.12;font-weight:800;letter-spacing:-1.8px;margin:20px 0}h1 span{color:#bd7c00}
+.description{font-size:18px;line-height:1.65;color:#435675;max-width:550px}
+.hero-actions{display:flex;flex-wrap:wrap;gap:12px;margin-top:28px}.hero-actions a,.hero-actions button{padding:15px 18px;border-radius:12px;font-weight:700;text-decoration:none;display:flex;align-items:center;gap:12px}
+.hero-actions a{background:#ffc42f;color:#122039}.hero-actions button{border:1px solid #547cb6;background:#fff;color:#4c5f7c;cursor:not-allowed}.hero-actions img{width:24px;height:24px;object-fit:contain}
+figure{margin:0;min-width:0}.preview{width:100%;height:auto;display:block;border:5px solid #d7e7f4;border-radius:16px;box-shadow:0 20px 45px #0c284730}figcaption{font-size:12px;color:#233e58;background:#ffffffdf;border-radius:6px;padding:9px;margin-top:10px}
+.modules{max-width:1440px;margin:auto;padding:42px 6% 52px;text-align:center}h2{font-size:30px;letter-spacing:-.6px;font-weight:750}.section-description{color:#536987;margin:12px 0 28px}
+.module-grid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:18px;text-align:left}.module-grid article{padding:24px;border:1px solid #dce6f2;border-radius:15px;box-shadow:0 8px 24px #142c4d05}.module-grid img{width:54px;height:54px;object-fit:contain;margin-bottom:18px}.module-grid h3{font-size:19px;font-weight:750}.module-grid p{color:#536987;line-height:1.6;margin:10px 0 0}
+a:focus-visible{outline:3px solid #0064ec;outline-offset:4px}
+@media(max-width:1000px){.hero-inner{grid-template-columns:1fr;gap:30px}.hero-copy{max-width:680px}.preview{max-width:800px;margin:auto}.module-grid{grid-template-columns:repeat(2,minmax(0,1fr))}}
+@media(max-width:520px){.hero-inner{padding:32px 5%}.modules{padding:30px 5%}.module-grid{grid-template-columns:1fr}.eyebrow{font-size:11px;letter-spacing:1.5px}h1{font-size:38px}.description{font-size:16px}h2{font-size:26px}.hero-actions{flex-direction:column}.hero-actions a,.hero-actions button{justify-content:center}}

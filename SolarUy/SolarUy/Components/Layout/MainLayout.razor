@@ -1,0 +1,18 @@
+﻿@inherits LayoutComponentBase
+<div class="admin-shell">
+    <aside class="sidebar"><NavMenu /></aside>
+    <div class="workspace">
+        <header class="admin-header">
+            <input class="search" type="search" placeholder="Buscar parques, tareas, reportes…" aria-label="Búsqueda no disponible" disabled />
+            <AuthorizeView>
+                <Authorized Context="sesion">
+                    <div class="user"><span class="avatar" aria-hidden="true">@(sesion.User.Identity?.Name?.FirstOrDefault().ToString().ToUpperInvariant())</span><div><strong>@sesion.User.Identity?.Name</strong><small>@(sesion.User.IsInRole("ADMIN") ? "Administrador" : "Usuario")</small></div></div>
+                    <form action="/auth/logout" method="post" data-enhance="false"><AntiforgeryToken /><button class="logout" type="submit">Cerrar sesión</button></form>
+                </Authorized>
+                <NotAuthorized><a href="/auth/login" data-enhance-nav="false">Iniciar sesión</a></NotAuthorized>
+            </AuthorizeView>
+        </header>
+        <main id="contenido" class="admin-content">@Body</main>
+    </div>
+</div>
+<div id="blazor-error-ui" role="alert">Se produjo un error. <a href="" class="reload">Recargar</a><button class="dismiss" aria-label="Cerrar aviso">×</button></div>

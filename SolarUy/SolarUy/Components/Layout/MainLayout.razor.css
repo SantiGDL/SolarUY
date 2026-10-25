@@ -1,0 +1,8 @@
+﻿.admin-shell{display:grid;grid-template-columns:240px minmax(0,1fr);min-height:100vh;background:#f2f7fd;color:#102041}.sidebar{background:#10283f;min-width:0}.workspace{min-width:0}
+.admin-header{min-height:86px;background:#fff;border-bottom:1px solid #e0e9f5;display:flex;align-items:center;justify-content:flex-end;gap:20px;padding:18px 28px}
+.search{margin-right:auto;width:min(440px,45%);padding:14px 18px;border:1px solid #dbe6f4;border-radius:10px;background:#f3f7fc;color:#536987}.search::placeholder{color:#536987}.user{display:flex;align-items:center;gap:12px;min-width:0}.user strong{overflow-wrap:anywhere}.user small{display:block;color:#536987;margin-top:3px}.avatar{background:#006bff;color:#fff;border-radius:50%;width:42px;height:42px;display:grid;place-items:center;flex-shrink:0}
+.logout{padding:10px 14px;border:1px solid #b83243;background:white;color:#a32234;border-radius:8px}.admin-header form{margin:0;flex-shrink:0}.admin-content{padding:24px;max-width:1600px;margin:auto}
+#blazor-error-ui{display:none;background:#fff4d2;padding:1rem;position:fixed;bottom:0;width:100%;z-index:1000}.dismiss{float:right;border:0;background:none}
+a:focus-visible,button:focus-visible{outline:3px solid #006bff;outline-offset:4px}
+@media(max-width:1000px){.admin-shell{grid-template-columns:200px minmax(0,1fr)}.admin-header{gap:12px;padding:16px}.search{display:none}.admin-content{padding:18px}}
+@media(max-width:700px){.admin-shell{display:block}.admin-header{flex-wrap:wrap;justify-content:space-between}.admin-content{padding:16px}.user{flex:1}.logout{font-size:14px}}

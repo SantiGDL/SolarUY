@@ -1,4 +1,4 @@
-using SolarUy.Backend.Modulos.Parques.Aplicacion.Contratos;
+﻿using SolarUy.Backend.Modulos.Parques.Aplicacion.Contratos;
 using SolarUy.Backend.Modulos.Parques.Aplicacion.DTOs;
 using SolarUy.Backend.Modulos.Parques.Aplicacion.Excepciones;
 using SolarUy.Backend.Modulos.Parques.Aplicacion.Implementaciones;
@@ -116,7 +116,7 @@ public sealed class ParquesServiceTests
         public Task<bool> EsAdministradorAsync() => Task.FromResult(administrador);
     }
 
-    private sealed class RepositorioFalso : IParqueRepositorio
+    private sealed class RepositorioFalso : IParqueRepository
     {
         public List<Parque> Parques { get; } = [];
         public bool ConsultaRealizada { get; private set; }
@@ -143,3 +143,4 @@ public sealed class ParquesServiceTests
         }
     }
 }
+

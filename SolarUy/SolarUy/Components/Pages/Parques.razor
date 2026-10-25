@@ -1,0 +1,91 @@
+﻿@page "/admin/parques"
+@attribute [Authorize]
+@rendermode InteractiveServer
+@using SolarUy.Backend.Modulos.Parques.Aplicacion.Contratos
+@using SolarUy.Backend.Modulos.Parques.Aplicacion.DTOs
+@using SolarUy.Backend.Modulos.Parques.Aplicacion.Excepciones
+@inject IParquesService ParquesService
+@inject ILogger<Parques> Logger
+<PageTitle>Parques solares — SolarUy</PageTitle>
+<a href="/admin" class="back">← Volver al panel</a>
+<header class="page-heading"><p>Gestión de parques</p><h1>Parques solares</h1><span>Consultá tus parques registrados y sus ubicaciones.</span></header>
+@if (_error is not null) { <div class="alert alert-danger" role="alert">@_error</div> }
+@if (_confirmacion is not null) { <div class="alert alert-success" role="status">@_confirmacion</div> }
+<AuthorizeView Roles="ADMIN">
+    <Authorized Context="sesion">
+        <section class="surface" aria-labelledby="register-title">
+            <h2 id="register-title">Registrar un parque</h2>
+            <EditForm Model="_nuevo" OnValidSubmit="RegistrarAsync" FormName="registrar-parque">
+                <DataAnnotationsValidator />
+                <fieldset disabled="@_guardando">
+                    <div class="form-grid">
+                        <div><label for="nombre">Nombre</label><InputText id="nombre" class="form-control" @bind-Value="_nuevo.Nombre" maxlength="100" autocomplete="off" /><ValidationMessage For="() => _nuevo.Nombre" /></div>
+                        <div><label for="direccion">Dirección</label><InputText id="direccion" class="form-control" @bind-Value="_nuevo.Direccion" maxlength="250" autocomplete="street-address" /><ValidationMessage For="() => _nuevo.Direccion" /></div>
+                    </div>
+                    <button class="btn btn-primary" type="submit">@(_guardando ? "Guardando…" : "Registrar parque")</button>
+                </fieldset>
+            </EditForm>
+        </section>
+    </Authorized>
+    <NotAuthorized><p class="permission-note">Podés consultar los parques. El registro está disponible para administradores.</p></NotAuthorized>
+</AuthorizeView>
+<section class="surface" aria-labelledby="list-title" aria-busy="@_cargando">
+    <div class="list-heading"><h2 id="list-title">Parques registrados</h2><button class="btn btn-outline-primary" disabled="@(_cargando || _guardando)" @onclick="CargarAsync">Actualizar</button></div>
+    @if (_cargando) { <p role="status">Cargando parques…</p> }
+    else if (_parques is null) { <p>No se pudo cargar la lista. Volvé a intentarlo con Actualizar.</p> }
+    else if (_parques.Count == 0) { <p class="empty">Todavía no hay parques registrados.</p> }
+    else
+    {
+        <div class="table-wrap"><table class="table"><caption>@_parques.Count parques registrados</caption><thead><tr><th scope="col">Nombre</th><th scope="col">Dirección</th></tr></thead><tbody>
+        @foreach (var parque in _parques) { <tr @key="parque.Id"><td>@parque.Nombre</td><td>@parque.Direccion</td></tr> }
+        </tbody></table></div>
+    }
+</section>
+@code {
+    private CrearParqueDto _nuevo = new();
+    private IReadOnlyList<ParqueDto>? _parques;
+    private bool _cargando = true;
+    private bool _guardando;
+    private string? _error;
+    private string? _confirmacion;
+    protected override Task OnInitializedAsync() => CargarAsync();
+
+    private async Task CargarAsync()
+    {
+        _cargando = true;
+        _error = null;
+        try { _parques = await ParquesService.ObtenerTodosAsync(); }
+        catch (Exception exception) when (exception is ParquesPersistenciaException or AccesoNoAutorizadoException or InvalidOperationException)
+        {
+            Logger.LogError(exception, "No se pudieron consultar los parques.");
+            _error = "No se pudieron cargar los parques. Intentá nuevamente.";
+            _parques = null;
+        }
+        finally { _cargando = false; }
+    }
+
+    private async Task RegistrarAsync()
+    {
+        if (_guardando) return;
+        _guardando = true;
+        _error = null;
+        _confirmacion = null;
+        try
+        {
+            var creado = await ParquesService.RegistrarAsync(_nuevo);
+            _confirmacion = $"El parque «{creado.Nombre}» se registró correctamente.";
+            _nuevo = new();
+            await CargarAsync();
+        }
+        catch (NombreParqueDuplicadoException exception) { _error = exception.Message; }
+        catch (AccesoNoAutorizadoException exception) { _error = exception.Message; }
+        catch (ArgumentException) { _error = "Revisá nombre y dirección: son obligatorios y admiten hasta 100 y 250 caracteres."; }
+        catch (Exception exception) when (exception is ParquesPersistenciaException or InvalidOperationException)
+        {
+            Logger.LogError(exception, "No se pudo registrar el parque.");
+            _error = "No se pudo confirmar el registro. Actualizá la lista antes de volver a intentarlo.";
+        }
+        finally { _guardando = false; }
+    }
+}
+

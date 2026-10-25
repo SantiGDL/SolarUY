@@ -1,0 +1,57 @@
+﻿@page "/admin"
+@attribute [Authorize]
+@using SolarUy.Backend.Modulos.Parques.Aplicacion.Contratos
+@using SolarUy.Backend.Modulos.Parques.Aplicacion.Excepciones
+@inject IParquesService Parques
+@inject ILogger<PanelAdmin> Logger
+<PageTitle>Panel de gestión — SolarUy</PageTitle>
+<section class="panel-hero">
+    <p class="eyebrow">Panel administrativo</p>
+    <h1>Panel de gestión <span>SolarUy</span></h1>
+    <p>Consultá tus parques solares y centralizá su gestión.<br />Tu energía, organizada en un solo lugar.</p>
+</section>
+<section class="summary-grid" aria-label="Resumen de gestión">
+    <article class="summary-card">
+        <img src="images/IconoPanelSolar.png" alt="" />
+        <div><h2>Parques activos</h2><strong>Sin datos</strong><p>@_resumenParques</p></div>
+    </article>
+    <article class="summary-card"><img src="images/IconoProduccion.png" alt="" /><div><h2>Producción actual</h2><strong>Sin datos</strong><p>Mediciones aún no disponibles</p></div></article>
+    <article class="summary-card"><img src="images/IconoTareas.png" alt="" /><div><h2>Tareas pendientes</h2><strong>Sin datos</strong><p>Módulo próximamente disponible</p></div></article>
+</section>
+<section class="surface quick-access" aria-labelledby="quick-title">
+    <p class="eyebrow">Accesos rápidos</p><h2 id="quick-title">Gestión diaria de tu plataforma</h2>
+    <div class="quick-grid">
+        <a href="/admin/parques" data-enhance-nav="false"><img src="images/IconoPanelSolar.png" alt="" /><h3>Gestionar parques</h3><p>Consultá y registrá tus parques solares.</p><span class="action">Abrir parques →</span></a>
+        <button disabled><img src="images/IconoProduccion.png" alt="" /><span class="card-title">Ver producción</span><span>Revisá la energía generada por tus parques.</span><small>Próximamente</small></button>
+        <button disabled><img src="images/IconoTareas.png" alt="" /><span class="card-title">Gestionar tareas</span><span>Organizá las tareas de mantenimiento.</span><small>Próximamente</small></button>
+        <button disabled><img src="images/IconoReportes.png" alt="" /><span class="card-title">Reportes</span><span>Conocé el rendimiento de tus parques.</span><small>Próximamente</small></button>
+    </div>
+</section>
+<div class="detail-grid">
+    <section class="surface activity" aria-labelledby="activity-title"><div class="section-heading"><h2 id="activity-title">Actividad reciente</h2><button disabled>Ver todas</button></div><div class="empty"><img src="images/IconoTareas.png" alt="" /><h3>Todavía no hay actividad disponible</h3><p>Los eventos de la plataforma se mostrarán aquí cuando esté disponible este módulo.</p></div></section>
+    <section class="surface production" aria-labelledby="production-title"><div class="section-heading"><h2 id="production-title">Producción de energía</h2><button disabled>Últimos 7 días</button></div><figure><img src="images/GraficaMockup.png" alt="Ejemplo visual de una gráfica de producción de energía" /><figcaption>Gráfica ilustrativa, sin datos reales.</figcaption></figure></section>
+</div>
+@code {
+    private string _resumenParques = "Consultando parques registrados…";
+    protected override async Task OnInitializedAsync()
+    {
+        try
+        {
+            var parques = await Parques.ObtenerTodosAsync();
+            _resumenParques = $"{parques.Count} parques registrados · estado operativo no disponible";
+        }
+        catch (ParquesPersistenciaException)
+        {
+            _resumenParques = "No se pudo consultar el total de parques.";
+        }
+        catch (AccesoNoAutorizadoException)
+        {
+            _resumenParques = "Iniciá sesión para consultar parques.";
+        }
+        catch (InvalidOperationException exception)
+        {
+            Logger.LogError(exception, "No se pudo inicializar la consulta de parques.");
+            _resumenParques = "Consulta de parques no disponible.";
+        }
+    }
+}
