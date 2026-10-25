@@ -1,4 +1,4 @@
-﻿<Project Sdk="Microsoft.NET.Sdk.Web">
+<Project Sdk="Microsoft.NET.Sdk.Web">
 
     <PropertyGroup>
         <TargetFramework>net10.0</TargetFramework>
@@ -9,12 +9,38 @@
   </PropertyGroup>
 
     <ItemGroup>
+      <ProjectReference Include="..\Sensor\Sensor.csproj" />
+      <PackageReference Include="Microsoft.AspNetCore.Components.WebAssembly.Server" Version="10.0.13" />
       <PackageReference Include="Microsoft.AspNetCore.Authentication.OpenIdConnect" Version="10.0.0" />
       <PackageReference Include="Microsoft.EntityFrameworkCore.Design" Version="10.0.12">
         <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
         <PrivateAssets>all</PrivateAssets>
       </PackageReference>
       <PackageReference Include="MySql.EntityFrameworkCore" Version="10.0.12" />
+    </ItemGroup>
+
+    <ItemGroup>
+      <_ContentIncludedByDefault Remove="SolarUy\bin\Debug\net10.0\appsettings.Development.json" />
+      <_ContentIncludedByDefault Remove="SolarUy\bin\Debug\net10.0\appsettings.json" />
+      <_ContentIncludedByDefault Remove="SolarUy\bin\Debug\net10.0\BlazorDebugProxy\BrowserDebugHost.runtimeconfig.json" />
+      <_ContentIncludedByDefault Remove="SolarUy\bin\Debug\net10.0\Sensor.staticwebassets.endpoints.json" />
+      <_ContentIncludedByDefault Remove="SolarUy\bin\Debug\net10.0\Sensor.staticwebassets.runtime.json" />
+      <_ContentIncludedByDefault Remove="SolarUy\bin\Debug\net10.0\SolarUy.deps.json" />
+      <_ContentIncludedByDefault Remove="SolarUy\bin\Debug\net10.0\SolarUy.runtimeconfig.json" />
+      <_ContentIncludedByDefault Remove="SolarUy\bin\Debug\net10.0\SolarUy.staticwebassets.endpoints.json" />
+      <_ContentIncludedByDefault Remove="SolarUy\bin\Debug\net10.0\SolarUy.staticwebassets.runtime.json" />
+      <_ContentIncludedByDefault Remove="SolarUy\obj\Debug\net10.0\rbcswa.dswa.cache.json" />
+      <_ContentIncludedByDefault Remove="SolarUy\obj\Debug\net10.0\rjimswa.dswa.cache.json" />
+      <_ContentIncludedByDefault Remove="SolarUy\obj\Debug\net10.0\rjsmcshtml.dswa.cache.json" />
+      <_ContentIncludedByDefault Remove="SolarUy\obj\Debug\net10.0\rjsmrazor.dswa.cache.json" />
+      <_ContentIncludedByDefault Remove="SolarUy\obj\Debug\net10.0\rpswa.dswa.cache.json" />
+      <_ContentIncludedByDefault Remove="SolarUy\obj\Debug\net10.0\SolarUy.sourcelink.json" />
+      <_ContentIncludedByDefault Remove="SolarUy\obj\Debug\net10.0\staticwebassets.build.endpoints.json" />
+      <_ContentIncludedByDefault Remove="SolarUy\obj\Debug\net10.0\staticwebassets.build.json" />
+      <_ContentIncludedByDefault Remove="SolarUy\obj\Debug\net10.0\staticwebassets.development.json" />
+      <_ContentIncludedByDefault Remove="SolarUy\obj\project.assets.json" />
+      <_ContentIncludedByDefault Remove="SolarUy\obj\project.packagespec.json" />
+      <_ContentIncludedByDefault Remove="SolarUy\obj\SolarUy.csproj.nuget.dgspec.json" />
     </ItemGroup>
 
 </Project>

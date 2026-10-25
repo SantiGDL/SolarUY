@@ -14,7 +14,8 @@ using SolarUy.Components.Servicios;
 var builder = WebApplication.CreateBuilder(args);
 
 builder.Services.AddRazorComponents()
-    .AddInteractiveServerComponents();
+    .AddInteractiveServerComponents()
+    .AddInteractiveWebAssemblyComponents();
 
 builder.Services.AddCascadingAuthenticationState();
 builder.Services.AddAuthentication(options =>
@@ -61,6 +62,11 @@ builder.Services.AddScoped<IUsuarioActual, UsuarioActual>();
 
 var app = builder.Build();
 
+if (app.Environment.IsDevelopment())
+{
+    app.UseWebAssemblyDebugging();
+}
+
 if (!app.Environment.IsDevelopment())
 {
     app.UseExceptionHandler("/Error", createScopeForErrors: true);
@@ -99,7 +105,9 @@ app.MapPost("/logout", async (HttpContext context, IAntiforgery antiforgery) =>
 
 app.MapStaticAssets();
 app.MapRazorComponents<App>()
-    .AddInteractiveServerRenderMode();
+    .AddInteractiveServerRenderMode()
+    .AddInteractiveWebAssemblyRenderMode()
+    .AddAdditionalAssemblies(typeof(Sensor.Pages.Counter).Assembly);
 
 if (app.Environment.IsDevelopment())
 {
