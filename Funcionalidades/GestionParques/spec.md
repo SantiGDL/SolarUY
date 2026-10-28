@@ -11,7 +11,9 @@ servicios de aplicación mediante inyección de dependencias y C# dentro del
 mismo proceso; no se agrega una API HTTP separada.
 
 - **Presentación:** `Components/Pages/Parques.razor` muestra la lista y el
-  formulario; `PanelAdmin.razor` muestra el total y enlaza a la gestión.
+  formulario; `PanelAdmin.razor` muestra el total y enlaza a la gestión. La
+  gestión comienza con un tablero visual interactivo: al enfocar, pasar el
+  cursor o seleccionar un parque se muestran sus nodos.
 - **Aplicación:** `IParquesService` coordina consulta y registro; devuelve DTOs
   y comprueba autenticación/rol mediante el contrato `IUsuarioActual`.
 - **Dominio:** `Parque` aplica límites, recorte y normalización del nombre.
@@ -27,6 +29,8 @@ mismo proceso; no se agrega una API HTTP separada.
 - Entity Framework Core 10 y `MySql.EntityFrameworkCore` 10.0.12.
 - La tabla `Parques` contiene identificador autogenerado, nombre, dirección y
   nombre normalizado.
+- El tablero carga todos los nodos en una consulta y los agrupa por parque para
+  evitar consultas adicionales por cada tarjeta.
 - Un índice único en `NombreNormalizado` protege contra registros duplicados
   concurrentes.
 - La cadena de conexión se configura con User Secrets o variables de entorno;

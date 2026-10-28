@@ -1,0 +1,208 @@
+@page "/admin/parques/{ParqueId:int}/nodos"
+@layout MainLayout
+@attribute [Microsoft.AspNetCore.Authorization.Authorize]
+@using SolarUy.Backend.Modulos.Parques.Aplicacion.Contratos
+@using SolarUy.Backend.Modulos.Parques.Aplicacion.DTOs
+@using SolarUy.Backend.Modulos.Parques.Aplicacion.Excepciones
+@inject IParquesService ServicioParques
+@inject INodosService ServicioNodos
+@inject ILogger<Nodos> Logger
+
+<PageTitle>SolarUy | Nodos</PageTitle>
+
+<p><a href="/admin/parques">Volver a parques</a></p>
+
+@if (parqueNoEncontrado)
+{
+    <section class="admin-card">
+        <h1>Parque no encontrado</h1>
+        <p>El parque solicitado no existe o ya no está disponible.</p>
+    </section>
+}
+else if (parque is not null)
+{
+    <section class="admin-card">
+        <p class="eyebrow">GESTIÓN DE NODOS</p>
+        <h1>Nodos de @parque.Nombre</h1>
+        <p>@parque.Direccion</p>
+        <p>Consultá los nodos asociados a este parque.</p>
+    </section>
+
+    <AuthorizeView Roles="ADMIN">
+        <Authorized Context="administrador">
+            <section class="admin-card mt-4" aria-labelledby="registro-nodo-title">
+                <h2 id="registro-nodo-title">Registrar nodo</h2>
+                <EditForm Model="@nuevoNodo" OnValidSubmit="RegistrarAsync">
+                    <DataAnnotationsValidator />
+                    <ValidationSummary />
+                    <div class="mb-3">
+                        <label class="form-label" for="nombre-nodo">Nombre</label>
+                        <InputText id="nombre-nodo"
+                                   class="form-control"
+                                   @bind-Value="nuevoNodo.Nombre" />
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label" for="ubicacion-nodo">Ubicación dentro del parque</label>
+                        <InputText id="ubicacion-nodo"
+                                   class="form-control"
+                                   @bind-Value="nuevoNodo.UbicacionDentroParque" />
+                    </div>
+                    <button class="btn btn-primary" type="submit" disabled="@enviando">
+                        @(enviando ? "Guardando..." : "Registrar nodo")
+                    </button>
+                </EditForm>
+            </section>
+        </Authorized>
+    </AuthorizeView>
+
+    @if (!string.IsNullOrWhiteSpace(mensajeExito))
+    {
+        <div class="alert alert-success mt-4" role="status">@mensajeExito</div>
+    }
+    @if (!string.IsNullOrWhiteSpace(mensajeError))
+    {
+        <div class="alert alert-danger mt-4" role="alert">@mensajeError</div>
+    }
+
+    <section class="admin-card mt-4" aria-labelledby="lista-nodos-title">
+        <h2 id="lista-nodos-title">Nodos registrados</h2>
+        @if (cargando)
+        {
+            <p role="status">Cargando nodos...</p>
+        }
+        else if (nodos is null)
+        {
+            <p>No se pudo cargar la lista. Volvé a intentarlo más tarde.</p>
+        }
+        else if (nodos.Count == 0)
+        {
+            <p>Este parque todavía no tiene nodos registrados.</p>
+        }
+        else
+        {
+            <div class="table-responsive">
+                <table class="table table-striped">
+                    <thead>
+                        <tr>
+                            <th scope="col">Nombre</th>
+                            <th scope="col">Ubicación dentro del parque</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var nodo in nodos)
+                        {
+                            <tr @key="nodo.Id">
+                                <td>@nodo.Nombre</td>
+                                <td>@nodo.UbicacionDentroParque</td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+        }
+    </section>
+}
+else if (cargando)
+{
+    <p role="status">Cargando parque...</p>
+}
+else if (!string.IsNullOrWhiteSpace(mensajeError))
+{
+    <div class="alert alert-danger" role="alert">@mensajeError</div>
+}
+
+@code {
+    [Parameter]
+    public int ParqueId { get; set; }
+
+    private ParqueDto? parque;
+    private IReadOnlyList<NodoDto>? nodos;
+    private CrearNodoDto nuevoNodo = new();
+    private bool parqueNoEncontrado;
+    private bool cargando = true;
+    private bool enviando;
+    private string mensajeError = string.Empty;
+    private string mensajeExito = string.Empty;
+
+    protected override Task OnParametersSetAsync() => CargarAsync();
+
+    private async Task CargarAsync()
+    {
+        cargando = true;
+        mensajeError = string.Empty;
+        parqueNoEncontrado = false;
+
+        try
+        {
+            var parques = await ServicioParques.ObtenerTodosAsync();
+            parque = parques.SingleOrDefault(item => item.Id == ParqueId);
+            if (parque is null)
+            {
+                parqueNoEncontrado = true;
+                nodos = [];
+                return;
+            }
+
+            nodos = await ServicioNodos.ObtenerPorParqueAsync(ParqueId);
+        }
+        catch (ParqueNoEncontradoException)
+        {
+            parqueNoEncontrado = true;
+            nodos = [];
+        }
+        catch (ParquesPersistenciaException exception)
+        {
+            Logger.LogError(exception, "No se pudo consultar el parque {ParqueId}.", ParqueId);
+            mensajeError = "No se pudo cargar el parque.";
+        }
+        catch (NodosPersistenciaException exception)
+        {
+            Logger.LogError(exception, "No se pudieron consultar los nodos del parque {ParqueId}.", ParqueId);
+            nodos = null;
+            mensajeError = "No se pudo cargar la lista de nodos.";
+        }
+        finally
+        {
+            cargando = false;
+        }
+    }
+
+    private async Task RegistrarAsync()
+    {
+        enviando = true;
+        mensajeError = string.Empty;
+        mensajeExito = string.Empty;
+
+        try
+        {
+            var nodo = await ServicioNodos.RegistrarAsync(ParqueId, nuevoNodo);
+            mensajeExito = $"Se registró el nodo {nodo.Nombre}.";
+            nuevoNodo = new CrearNodoDto();
+            await CargarAsync();
+        }
+        catch (ArgumentException exception)
+        {
+            mensajeError = exception.Message;
+        }
+        catch (ParqueNoEncontradoException)
+        {
+            parqueNoEncontrado = true;
+        }
+        catch (AccesoNoAutorizadoException exception)
+        {
+            mensajeError = exception.Message;
+        }
+        catch (NodosPersistenciaException exception)
+        {
+            Logger.LogError(
+                exception,
+                "No se pudo registrar un nodo para el parque {ParqueId}.",
+                ParqueId);
+            mensajeError = "No se pudo guardar el nodo. Intentá nuevamente.";
+        }
+        finally
+        {
+            enviando = false;
+        }
+    }
+}
