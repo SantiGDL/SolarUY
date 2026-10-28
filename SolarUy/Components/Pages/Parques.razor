@@ -6,6 +6,7 @@
 @using SolarUy.Backend.Modulos.Parques.Aplicacion.DTOs
 @using SolarUy.Backend.Modulos.Parques.Aplicacion.Excepciones
 @inject IParquesService ServicioParques
+@inject INodosService ServicioNodos
 @inject ILogger<Parques> Logger
 
 <PageTitle>SolarUy | Parques</PageTitle>
@@ -14,6 +15,97 @@
     <p class="eyebrow">GESTIÓN DE PARQUES</p>
     <h1>Parques solares</h1>
     <p>Consultá los parques registrados. Los usuarios con rol ADMIN también pueden registrar parques.</p>
+</section>
+
+<section class="admin-card mt-4" aria-labelledby="mapa-parques-title">
+    <div class="parque-map-heading">
+        <div>
+            <p class="eyebrow">VISTA GENERAL</p>
+            <h2 id="mapa-parques-title">Mapa interactivo de parques</h2>
+        </div>
+        @if (parques is not null)
+        {
+            <span class="parque-map-count">
+                @parques.Count @(parques.Count == 1 ? "parque" : "parques")
+            </span>
+        }
+    </div>
+    <p class="parque-map-help">
+        Vista visual, no geográfica. Pasá el cursor o enfocá un parque para ver sus nodos;
+        también podés seleccionarlo.
+    </p>
+
+    @if (cargando)
+    {
+        <p role="status">Cargando parques y nodos...</p>
+    }
+    else if (!string.IsNullOrWhiteSpace(errorMapa))
+    {
+        <div class="alert alert-danger" role="alert">@errorMapa</div>
+    }
+    else if (parques is { Count: 0 })
+    {
+        <div class="parque-map-empty">
+            <span aria-hidden="true">☀</span>
+            <p>Cuando registres parques, aparecerán acá con sus nodos.</p>
+        </div>
+    }
+    else if (parques is not null)
+    {
+        <div class="parque-map-board" aria-label="Vista interactiva de parques y sus nodos">
+            <div class="parque-map-grid">
+                @foreach (var parque in parques)
+                {
+                    var nodosParque = ObtenerNodos(parque.Id);
+                    var seleccionado = parqueSeleccionadoId == parque.Id;
+                    <article @key="parque.Id"
+                             class="parque-map-item @(seleccionado ? "is-selected" : string.Empty)">
+                        <button class="parque-map-marker"
+                                type="button"
+                                aria-label="@($"{parque.Nombre}, {nodosParque.Count} nodos. Seleccionar para mostrar detalles.")"
+                                @onclick="() => AlternarParque(parque.Id)">
+                            <span class="parque-map-icon" aria-hidden="true">☀</span>
+                            <span class="parque-map-marker-copy">
+                                <strong>@parque.Nombre</strong>
+                                <small>@parque.Direccion</small>
+                                <span class="parque-map-node-count">
+                                    @nodosParque.Count @(nodosParque.Count == 1 ? "nodo" : "nodos")
+                                </span>
+                            </span>
+                            <span class="parque-map-pulse" aria-hidden="true"></span>
+                        </button>
+                        <div class="parque-map-orbit"
+                             role="region"
+                             aria-label="@($"Nodos del parque {parque.Nombre}")">
+                            @if (nodosParque.Count == 0)
+                            {
+                                <span class="parque-map-node-chip parque-map-node-empty">
+                                    Todavía no tiene nodos
+                                </span>
+                            }
+                            else
+                            {
+                                @foreach (var nodo in nodosParque)
+                                {
+                                    <a @key="nodo.Id"
+                                       class="parque-map-node-chip"
+                                       href="@($"/admin/parques/{parque.Id}/nodos")"
+                                       aria-label="@($"Gestionar los nodos del parque {parque.Nombre}")"
+                                       title="@nodo.UbicacionDentroParque">
+                                        <span class="parque-map-node-dot" aria-hidden="true"></span>
+                                        <span>
+                                            <strong>@nodo.Nombre</strong>
+                                            <small>@nodo.UbicacionDentroParque</small>
+                                        </span>
+                                    </a>
+                                }
+                            }
+                        </div>
+                    </article>
+                }
+            </div>
+        </div>
+    }
 </section>
 
 <AuthorizeView Roles="ADMIN">
@@ -70,6 +162,7 @@
                     <tr>
                         <th scope="col">Nombre</th>
                         <th scope="col">Dirección</th>
+                        <th scope="col">Nodos</th>
                     </tr>
                 </thead>
                 <tbody>
@@ -78,6 +171,12 @@
                         <tr @key="parque.Id">
                             <td>@parque.Nombre</td>
                             <td>@parque.Direccion</td>
+                            <td>
+                                <a class="btn btn-outline-primary btn-sm"
+                                   href="@($"/admin/parques/{parque.Id}/nodos")">
+                                    Gestionar nodos
+                                </a>
+                            </td>
                         </tr>
                     }
                 </tbody>
@@ -88,26 +187,42 @@
 
 @code {
     private IReadOnlyList<ParqueDto>? parques;
+    private IReadOnlyDictionary<int, IReadOnlyList<NodoDto>> nodosPorParque =
+        new Dictionary<int, IReadOnlyList<NodoDto>>();
     private CrearParqueDto nuevoParque = new();
+    private int? parqueSeleccionadoId;
     private bool cargando = true;
     private bool enviando;
     private string mensajeError = string.Empty;
     private string mensajeExito = string.Empty;
+    private string errorMapa = string.Empty;
 
     protected override Task OnInitializedAsync() => CargarAsync();
 
     private async Task CargarAsync()
     {
         cargando = true;
+        errorMapa = string.Empty;
         try
         {
             parques = await ServicioParques.ObtenerTodosAsync();
+            nodosPorParque = await ServicioNodos.ObtenerTodosAgrupadosPorParqueAsync();
+            if (parqueSeleccionadoId is int parqueId
+                && !parques.Any(parque => parque.Id == parqueId))
+            {
+                parqueSeleccionadoId = null;
+            }
         }
         catch (ParquesPersistenciaException exception)
         {
             Logger.LogError(exception, "No se pudo consultar la lista de parques.");
             parques = null;
             mensajeError = "No se pudo cargar la lista de parques.";
+        }
+        catch (NodosPersistenciaException exception)
+        {
+            Logger.LogError(exception, "No se pudo consultar el resumen de nodos.");
+            errorMapa = "No se pudo cargar la vista de nodos. Volvé a intentarlo más tarde.";
         }
         finally
         {
@@ -150,4 +265,10 @@
             enviando = false;
         }
     }
+
+    private IReadOnlyList<NodoDto> ObtenerNodos(int parqueId) =>
+        nodosPorParque.TryGetValue(parqueId, out var nodos) ? nodos : [];
+
+    private void AlternarParque(int parqueId) =>
+        parqueSeleccionadoId = parqueSeleccionadoId == parqueId ? null : parqueId;
 }

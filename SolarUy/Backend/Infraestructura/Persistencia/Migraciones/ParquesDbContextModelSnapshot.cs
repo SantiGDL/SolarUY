@@ -18,6 +18,32 @@ namespace SolarUy.Backend.Infraestructura.Persistencia.Migraciones
                 .HasAnnotation("ProductVersion", "10.0.12")
                 .HasAnnotation("Relational:MaxIdentifierLength", 64);
 
+            modelBuilder.Entity("SolarUy.Backend.Modulos.Parques.Dominio.Entidades.Nodo", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    b.Property<string>("Nombre")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("varchar(100)");
+
+                    b.Property<int>("ParqueId")
+                        .HasColumnType("int");
+
+                    b.Property<string>("UbicacionDentroParque")
+                        .IsRequired()
+                        .HasMaxLength(250)
+                        .HasColumnType("varchar(250)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("ParqueId");
+
+                    b.ToTable("Nodos", (string)null);
+                });
+
             modelBuilder.Entity("SolarUy.Backend.Modulos.Parques.Dominio.Entidades.Parque", b =>
                 {
                     b.Property<int>("Id")
@@ -46,6 +72,15 @@ namespace SolarUy.Backend.Infraestructura.Persistencia.Migraciones
                         .IsUnique();
 
                     b.ToTable("Parques", (string)null);
+                });
+
+            modelBuilder.Entity("SolarUy.Backend.Modulos.Parques.Dominio.Entidades.Nodo", b =>
+                {
+                    b.HasOne("SolarUy.Backend.Modulos.Parques.Dominio.Entidades.Parque", null)
+                        .WithMany()
+                        .HasForeignKey("ParqueId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
                 });
 #pragma warning restore 612, 618
         }

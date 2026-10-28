@@ -57,7 +57,9 @@ var connectionString = builder.Configuration.GetConnectionString("SolarUy")
 builder.Services.AddDbContextFactory<ParquesDbContext>(options =>
     options.UseMySQL(connectionString));
 builder.Services.AddScoped<IParqueRepositorio, ParqueRepositorio>();
+builder.Services.AddScoped<INodoRepositorio, NodoRepositorio>();
 builder.Services.AddScoped<IParquesService, ParquesService>();
+builder.Services.AddScoped<INodosService, NodosService>();
 builder.Services.AddScoped<IUsuarioActual, UsuarioActual>();
 
 var app = builder.Build();
