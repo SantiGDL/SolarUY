@@ -10,6 +10,8 @@ public sealed class ParquesDbContext(DbContextOptions<ParquesDbContext> options)
 
     public DbSet<Nodo> Nodos => Set<Nodo>();
 
+    public DbSet<Panel> Paneles => Set<Panel>();
+
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         var parque = modelBuilder.Entity<Parque>();
@@ -39,5 +41,19 @@ public sealed class ParquesDbContext(DbContextOptions<ParquesDbContext> options)
             .HasForeignKey(item => item.ParqueId)
             .OnDelete(DeleteBehavior.Restrict);
         nodo.HasIndex(item => item.ParqueId);
+
+        var panel = modelBuilder.Entity<Panel>();
+        panel.ToTable("Paneles");
+        panel.HasKey(item => item.Id);
+        panel.Property(item => item.Id).ValueGeneratedOnAdd();
+        panel.Property(item => item.Estado).HasConversion<int>().IsRequired();
+        panel.Property(item => item.PotenciaActual).IsRequired();
+        panel.Property(item => item.Orientacion).HasMaxLength(50).IsRequired();
+        panel.Property(item => item.NodoId).IsRequired();
+        panel.HasOne<Nodo>()
+            .WithMany()
+            .HasForeignKey(item => item.NodoId)
+            .OnDelete(DeleteBehavior.Restrict);
+        panel.HasIndex(item => item.NodoId);
     }
 }

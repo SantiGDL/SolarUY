@@ -1,0 +1,411 @@
+@rendermode InteractiveServer
+@page "/admin/paneles"
+@layout MainLayout
+@attribute [Microsoft.AspNetCore.Authorization.Authorize]
+@using SolarUy.Backend.Modulos.Parques.Aplicacion.Contratos
+@using SolarUy.Backend.Modulos.Parques.Aplicacion.DTOs
+@using SolarUy.Backend.Modulos.Parques.Aplicacion.Excepciones
+@using SolarUy.Backend.Modulos.Parques.Dominio.Enums
+@inject IParquesService ServicioParques
+@inject IPanelesService ServicioPaneles
+@inject INodosService ServicioNodos
+@inject ILogger<Paneles> Logger
+
+<PageTitle>SolarUy | Paneles</PageTitle>
+
+<section class="admin-card">
+    <p class="eyebrow">GESTIÓN DE PANELES</p>
+    <h1>Paneles solares</h1>
+    <p>Consultá todos los paneles registrados y administrá la orientación, potencia y estado de cada uno.</p>
+</section>
+
+@if (!string.IsNullOrWhiteSpace(mensajeError))
+{
+    <div class="alert alert-danger mt-4" role="alert">@mensajeError</div>
+}
+
+@if (!string.IsNullOrWhiteSpace(mensajeExito))
+{
+    <div class="alert alert-success mt-4" role="status">@mensajeExito</div>
+}
+
+<AuthorizeView Roles="ADMIN">
+    <Authorized Context="administrador">
+        <section class="admin-card mt-4" aria-labelledby="panel-form-title">
+            <h2 id="panel-form-title">@(panelEditandoId.HasValue ? "Editar panel" : "Registrar panel")</h2>
+
+            @if (!parquesDisponibles.Any())
+            {
+                <p>No hay parques registrados para asociar paneles. Primero registrá un parque.</p>
+            }
+            else if (!nodosDisponibles.Any())
+            {
+                <p>No hay nodos disponibles para asociar paneles. Primero registrá nodos en un parque.</p>
+            }
+            else
+            {
+                <EditForm Model="@formulario" FormName="GuardarPanel" OnValidSubmit="GuardarAsync">
+                    <DataAnnotationsValidator />
+                    <ValidationSummary />
+
+                    <div class="mb-3">
+                        <label class="form-label" for="panel-parque">Parque</label>
+                        <InputSelect id="panel-parque"
+                                     class="form-select"
+                                     @bind-Value="parqueSeleccionadoId"
+                                     @bind-Value:after="OnParqueSeleccionadoAsync">
+                            @foreach (var parque in parquesDisponibles)
+                            {
+                                <option value="@parque.Id">@parque.Nombre</option>
+                            }
+                        </InputSelect>
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label" for="panel-nodo">Nodo</label>
+                        <InputSelect id="panel-nodo" class="form-select" @bind-Value="formulario.NodoId">
+                            @foreach (var nodo in nodosDisponibles)
+                            {
+                                <option value="@nodo.Id">@nodo.Nombre (@nodo.UbicacionDentroParque)</option>
+                            }
+                        </InputSelect>
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label" for="panel-estado">Estado</label>
+                        <InputSelect id="panel-estado" class="form-select" @bind-Value="formulario.Estado">
+                            @foreach (var estado in Enum.GetValues<EstadoPanel>())
+                            {
+                                <option value="@estado">@estado</option>
+                            }
+                        </InputSelect>
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label" for="panel-potencia">Potencia actual</label>
+                        <InputNumber id="panel-potencia" class="form-control" @bind-Value="formulario.PotenciaActual" />
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label" for="panel-orientacion">Orientación</label>
+                        <InputText id="panel-orientacion" class="form-control" @bind-Value="formulario.Orientacion" />
+                    </div>
+
+                    <div class="d-flex gap-2">
+                        <button class="btn btn-primary" type="submit" disabled="@enviando">
+                            @(enviando ? "Guardando..." : (panelEditandoId.HasValue ? "Actualizar panel" : "Registrar panel"))
+                        </button>
+                        @if (panelEditandoId.HasValue)
+                        {
+                            <button class="btn btn-outline-secondary" type="button" @onclick="CancelarEdicion">
+                                Cancelar
+                            </button>
+                        }
+                    </div>
+                </EditForm>
+            }
+        </section>
+    </Authorized>
+</AuthorizeView>
+
+<section class="admin-card mt-4" aria-labelledby="lista-paneles-title">
+    <h2 id="lista-paneles-title">Paneles registrados</h2>
+
+    @if (cargando)
+    {
+        <p role="status">Cargando paneles...</p>
+    }
+    else if (paneles is null)
+    {
+        <p>No se pudo cargar la lista de paneles.</p>
+    }
+    else if (paneles.Count == 0)
+    {
+        <p>Aún no hay paneles registrados.</p>
+    }
+    else
+    {
+        <div class="table-responsive">
+            <table class="table table-striped">
+                <thead>
+                    <tr>
+                        <th scope="col">Id</th>
+                        <th scope="col">Nodo</th>
+                        <th scope="col">Estado</th>
+                        <th scope="col">Potencia</th>
+                        <th scope="col">Orientación</th>
+                        <th scope="col">Acciones</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var panel in paneles)
+                    {
+                        var nodo = nodosDisponibles.FirstOrDefault(item => item.Id == panel.NodoId);
+                        <tr @key="panel.Id">
+                            <td>@panel.Id</td>
+                            <td>@(nodo is null ? $"Nodo {panel.NodoId}" : $"{nodo.Nombre} ({nodo.UbicacionDentroParque})")</td>
+                            <td>@panel.Estado</td>
+                            <td>@panel.PotenciaActual</td>
+                            <td>@panel.Orientacion</td>
+                            <td>
+                                <AuthorizeView Roles="ADMIN">
+                                    <Authorized>
+                                        <div class="d-flex gap-2">
+                                            <button class="btn btn-outline-primary btn-sm" type="button" @onclick="() => EditarAsync(panel.Id)">
+                                                Editar
+                                            </button>
+                                            <button class="btn btn-outline-danger btn-sm" type="button" @onclick="() => EliminarAsync(panel.Id)">
+                                                Eliminar
+                                            </button>
+                                        </div>
+                                    </Authorized>
+                                </AuthorizeView>
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    }
+</section>
+
+@code {
+    private IReadOnlyList<PanelDto>? paneles;
+    private IReadOnlyList<ParqueDto> parquesDisponibles = [];
+    private IReadOnlyList<NodoDto> nodosDisponibles = [];
+    private CrearPanelDto formulario = new();
+    private int? parqueSeleccionadoId;
+    private int? panelEditandoId;
+    private bool cargando = true;
+    private bool enviando;
+    private string mensajeError = string.Empty;
+    private string mensajeExito = string.Empty;
+
+    protected override async Task OnInitializedAsync() => await CargarAsync();
+
+    private async Task CargarAsync()
+    {
+        cargando = true;
+        mensajeError = string.Empty;
+
+        try
+        {
+            paneles = await ServicioPaneles.ObtenerTodosAsync();
+            var parques = await ServicioParques.ObtenerTodosAsync();
+            parquesDisponibles = parques.OrderBy(parque => parque.Nombre).ToArray();
+
+            var nodosAgrupados = await ServicioNodos.ObtenerTodosAgrupadosPorParqueAsync();
+            nodosDisponibles = nodosAgrupados
+                .SelectMany(parque => parque.Value)
+                .OrderBy(nodo => nodo.Nombre)
+                .ToArray();
+
+            if (!parquesDisponibles.Any())
+            {
+                parqueSeleccionadoId = null;
+                formulario.NodoId = 0;
+                return;
+            }
+
+            parqueSeleccionadoId ??= parquesDisponibles.First().Id;
+
+            if (nodosDisponibles.Any())
+            {
+                var nodosDelParque = nodosDisponibles
+                    .Where(nodo => nodo.ParqueId == parqueSeleccionadoId)
+                    .ToArray();
+
+                nodosDisponibles = nodosDelParque;
+                if (formulario.NodoId <= 0 && nodosDisponibles.Count > 0)
+                {
+                    formulario.NodoId = nodosDisponibles[0].Id;
+                }
+            }
+            else
+            {
+                formulario.NodoId = 0;
+            }
+
+            if (formulario.Estado == default)
+            {
+                formulario.Estado = EstadoPanel.Bueno;
+            }
+        }
+        catch (ParquesPersistenciaException exception)
+        {
+            Logger.LogError(exception, "No se pudo consultar la lista de parques para paneles.");
+            parquesDisponibles = [];
+            mensajeError = "No se pudo cargar la lista de parques disponibles.";
+        }
+        catch (PanelesPersistenciaException exception)
+        {
+            Logger.LogError(exception, "No se pudo consultar la lista de paneles.");
+            paneles = null;
+            mensajeError = "No se pudo cargar la lista de paneles.";
+        }
+        catch (NodosPersistenciaException exception)
+        {
+            Logger.LogError(exception, "No se pudo consultar la lista de nodos para paneles.");
+            nodosDisponibles = [];
+            mensajeError = "No se pudo cargar la lista de nodos disponibles.";
+        }
+        finally
+        {
+            cargando = false;
+        }
+    }
+
+    private async Task GuardarAsync()
+    {
+        enviando = true;
+        mensajeError = string.Empty;
+        mensajeExito = string.Empty;
+
+        try
+        {
+            if (panelEditandoId.HasValue)
+            {
+                var panel = await ServicioPaneles.ActualizarAsync(panelEditandoId.Value, formulario);
+                mensajeExito = $"Se actualizó el panel {panel.Id} correctamente.";
+            }
+            else
+            {
+                var panel = await ServicioPaneles.RegistrarAsync(formulario);
+                mensajeExito = $"Se registró el panel {panel.Id} correctamente.";
+            }
+
+            panelEditandoId = null;
+            formulario = new CrearPanelDto
+            {
+                Estado = EstadoPanel.Bueno,
+                PotenciaActual = 0,
+                NodoId = nodosDisponibles.FirstOrDefault()?.Id ?? 0,
+                Orientacion = string.Empty
+            };
+            await CargarAsync();
+        }
+        catch (ArgumentException exception)
+        {
+            mensajeError = exception.Message;
+        }
+        catch (NodoNoEncontradoException exception)
+        {
+            mensajeError = exception.Message;
+        }
+        catch (PanelNoEncontradoException exception)
+        {
+            mensajeError = exception.Message;
+        }
+        catch (AccesoNoAutorizadoException exception)
+        {
+            mensajeError = exception.Message;
+        }
+        catch (PanelesPersistenciaException exception)
+        {
+            Logger.LogError(exception, "No se pudo guardar el panel.");
+            mensajeError = "No se pudo guardar el panel. Intentá nuevamente.";
+        }
+        finally
+        {
+            enviando = false;
+        }
+    }
+
+    private async Task EditarAsync(int panelId)
+    {
+        var panel = (await ServicioPaneles.ObtenerTodosAsync())
+            .SingleOrDefault(item => item.Id == panelId);
+
+        if (panel is null)
+        {
+            mensajeError = "No se encontró el panel para editar.";
+            return;
+        }
+
+        panelEditandoId = panel.Id;
+        var nodo = (await ServicioNodos.ObtenerTodosAgrupadosPorParqueAsync())
+            .SelectMany(grupo => grupo.Value)
+            .SingleOrDefault(item => item.Id == panel.NodoId);
+
+        if (nodo is not null)
+        {
+            parqueSeleccionadoId = nodo.ParqueId;
+            var nodosDelParque = (await ServicioNodos.ObtenerPorParqueAsync(nodo.ParqueId))
+                .OrderBy(item => item.Nombre)
+                .ToArray();
+            nodosDisponibles = nodosDelParque;
+        }
+
+        formulario = new CrearPanelDto
+        {
+            NodoId = panel.NodoId,
+            Estado = panel.Estado,
+            PotenciaActual = panel.PotenciaActual,
+            Orientacion = panel.Orientacion
+        };
+    }
+
+    private async Task EliminarAsync(int panelId)
+    {
+        mensajeError = string.Empty;
+        mensajeExito = string.Empty;
+
+        try
+        {
+            await ServicioPaneles.EliminarAsync(panelId);
+            mensajeExito = $"Se eliminó el panel {panelId} correctamente.";
+            panelEditandoId = null;
+            formulario = new CrearPanelDto
+            {
+                Estado = EstadoPanel.Bueno,
+                PotenciaActual = 0,
+                NodoId = nodosDisponibles.FirstOrDefault()?.Id ?? 0,
+                Orientacion = string.Empty
+            };
+            await CargarAsync();
+        }
+        catch (PanelNoEncontradoException exception)
+        {
+            mensajeError = exception.Message;
+        }
+        catch (AccesoNoAutorizadoException exception)
+        {
+            mensajeError = exception.Message;
+        }
+        catch (PanelesPersistenciaException exception)
+        {
+            Logger.LogError(exception, "No se pudo eliminar el panel {PanelId}.", panelId);
+            mensajeError = "No se pudo eliminar el panel. Intentá nuevamente.";
+        }
+    }
+
+    private async Task OnParqueSeleccionadoAsync()
+    {
+        formulario.NodoId = 0;
+
+        if (parqueSeleccionadoId is null or <= 0)
+        {
+            nodosDisponibles = [];
+            return;
+        }
+
+        var nodos = await ServicioNodos.ObtenerPorParqueAsync(parqueSeleccionadoId.Value);
+        nodosDisponibles = nodos.OrderBy(item => item.Nombre).ToArray();
+        if (nodosDisponibles.Count > 0)
+        {
+            formulario.NodoId = nodosDisponibles[0].Id;
+        }
+    }
+
+    private void CancelarEdicion()
+    {
+        panelEditandoId = null;
+        formulario = new CrearPanelDto
+        {
+            Estado = EstadoPanel.Bueno,
+            PotenciaActual = 0,
+            NodoId = nodosDisponibles.FirstOrDefault()?.Id ?? 0,
+            Orientacion = string.Empty
+        };
+    }
+}

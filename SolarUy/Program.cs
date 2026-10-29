@@ -58,8 +58,10 @@ builder.Services.AddDbContextFactory<ParquesDbContext>(options =>
     options.UseMySQL(connectionString));
 builder.Services.AddScoped<IParqueRepositorio, ParqueRepositorio>();
 builder.Services.AddScoped<INodoRepositorio, NodoRepositorio>();
+builder.Services.AddScoped<IPanelRepositorio, PanelRepositorio>();
 builder.Services.AddScoped<IParquesService, ParquesService>();
 builder.Services.AddScoped<INodosService, NodosService>();
+builder.Services.AddScoped<IPanelesService, PanelService>();
 builder.Services.AddScoped<IUsuarioActual, UsuarioActual>();
 
 var app = builder.Build();
