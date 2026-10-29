@@ -1,3 +1,4 @@
+@rendermode InteractiveServer
 @page "/admin/parques/{ParqueId:int}/nodos"
 @layout MainLayout
 @attribute [Microsoft.AspNetCore.Authorization.Authorize]
@@ -32,7 +33,7 @@ else if (parque is not null)
         <Authorized Context="administrador">
             <section class="admin-card mt-4" aria-labelledby="registro-nodo-title">
                 <h2 id="registro-nodo-title">Registrar nodo</h2>
-                <EditForm Model="@nuevoNodo" OnValidSubmit="RegistrarAsync">
+                <EditForm Model="@nuevoNodo" FormName="RegistrarNodo" OnValidSubmit="RegistrarAsync">
                     <DataAnnotationsValidator />
                     <ValidationSummary />
                     <div class="mb-3">

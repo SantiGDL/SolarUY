@@ -44,6 +44,33 @@ namespace SolarUy.Backend.Infraestructura.Persistencia.Migraciones
                     b.ToTable("Nodos", (string)null);
                 });
 
+            modelBuilder.Entity("SolarUy.Backend.Modulos.Parques.Dominio.Entidades.Panel", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    b.Property<int>("Estado")
+                        .HasColumnType("int");
+
+                    b.Property<int>("NodoId")
+                        .HasColumnType("int");
+
+                    b.Property<double>("PotenciaActual")
+                        .HasColumnType("double");
+
+                    b.Property<string>("Orientacion")
+                        .IsRequired()
+                        .HasMaxLength(50)
+                        .HasColumnType("varchar(50)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("NodoId");
+
+                    b.ToTable("Paneles", (string)null);
+                });
+
             modelBuilder.Entity("SolarUy.Backend.Modulos.Parques.Dominio.Entidades.Parque", b =>
                 {
                     b.Property<int>("Id")
@@ -79,6 +106,15 @@ namespace SolarUy.Backend.Infraestructura.Persistencia.Migraciones
                     b.HasOne("SolarUy.Backend.Modulos.Parques.Dominio.Entidades.Parque", null)
                         .WithMany()
                         .HasForeignKey("ParqueId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+                });
+
+            modelBuilder.Entity("SolarUy.Backend.Modulos.Parques.Dominio.Entidades.Panel", b =>
+                {
+                    b.HasOne("SolarUy.Backend.Modulos.Parques.Dominio.Entidades.Nodo", null)
+                        .WithMany()
+                        .HasForeignKey("NodoId")
                         .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
                 });

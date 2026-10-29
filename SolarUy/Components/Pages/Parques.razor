@@ -112,7 +112,7 @@
     <Authorized Context="administrador">
         <section class="admin-card mt-4" aria-labelledby="registro-title">
             <h2 id="registro-title">Registrar parque</h2>
-            <EditForm Model="@nuevoParque" OnValidSubmit="RegistrarAsync">
+            <EditForm Model="@nuevoParque" FormName="RegistrarParque" OnValidSubmit="RegistrarAsync">
                 <DataAnnotationsValidator />
                 <ValidationSummary />
                 <div class="mb-3">
