@@ -10,6 +10,12 @@ using SolarUy.Backend.Modulos.Parques.Aplicacion.Implementaciones;
 using SolarUy.Backend.Modulos.Parques.Dominio.Repositorios;
 using SolarUy.Backend.Modulos.Parques.Infraestructura.Repositorios;
 using SolarUy.Components.Servicios;
+using SolarUy.Backend.Modulos.Mediciones.Aplicacion.Implementaciones;
+using SolarUy.Backend.Modulos.Mediciones.Dominio.Repositorios;
+using SolarUy.Backend.Modulos.Mediciones.Infraestructura.Persistencia;
+using SolarUy.Backend.Modulos.Mediciones.Infraestructura.Repositorios;
+using SolarUy.Backend.Modulos.Mediciones.Interfaz.SignalR;
+using SolarUy.Backend.Modulos.Parques.Interfaz.Apis.Local.Contratos;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -49,6 +55,7 @@ builder.Services.AddAuthentication(options =>
         options.Scope.Add("email");
     });
 builder.Services.AddAuthorization();
+builder.Services.AddSignalR();
 
 var connectionString = builder.Configuration.GetConnectionString("SolarUy")
     ?? throw new InvalidOperationException(
@@ -63,6 +70,11 @@ builder.Services.AddScoped<IParquesService, ParquesService>();
 builder.Services.AddScoped<INodosService, NodosService>();
 builder.Services.AddScoped<IPanelesService, PanelService>();
 builder.Services.AddScoped<IUsuarioActual, UsuarioActual>();
+builder.Services.AddDbContextFactory<MedicionesDbContext>(options =>
+    options.UseMySQL(connectionString, mysql => mysql.MigrationsHistoryTable("__MedicionesMigrationsHistory")));
+builder.Services.AddScoped<IMedicionRepository, MedicionRepository>();
+builder.Services.AddScoped<ICatalogoProduccion, CatalogoProduccionService>();
+builder.Services.AddScoped<MedicionesService>();
 
 var app = builder.Build();
 
@@ -108,6 +120,7 @@ app.MapPost("/logout", async (HttpContext context, IAntiforgery antiforgery) =>
 });
 
 app.MapStaticAssets();
+app.MapHub<MedicionesHub>("/hubs/mediciones");
 app.MapRazorComponents<App>()
     .AddInteractiveServerRenderMode()
     .AddInteractiveWebAssemblyRenderMode()
@@ -120,6 +133,9 @@ if (app.Environment.IsDevelopment())
         IDbContextFactory<ParquesDbContext>>();
     await using var context = await contextFactory.CreateDbContextAsync();
     await context.Database.MigrateAsync();
+    var medicionesFactory = scope.ServiceProvider.GetRequiredService<IDbContextFactory<MedicionesDbContext>>();
+    await using var medicionesContext = await medicionesFactory.CreateDbContextAsync();
+    await medicionesContext.Database.MigrateAsync();
 }
 
 app.Run();

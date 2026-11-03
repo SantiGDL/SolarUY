@@ -12,6 +12,7 @@
     @if (HttpContext.Request.Path.StartsWithSegments("/sensor"))
     {
         <link rel="stylesheet" href="@Assets["sensor/css/app.css"]"/>
+        <link rel="stylesheet" href="@Assets["_content/Radzen.Blazor/css/default-base.css"]"/>
     }
     <ImportMap/>
     <link rel="icon" type="image/png" href="favicon.png"/>
@@ -22,6 +23,7 @@
 <Routes/>
 <ReconnectModal/>
 <script src="@Assets["_framework/blazor.web.js"]"></script>
+<script src="@Assets["_content/Radzen.Blazor/Radzen.Blazor.js"]"></script>
 </body>
 
 </html>

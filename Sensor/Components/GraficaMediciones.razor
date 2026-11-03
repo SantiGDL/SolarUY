@@ -1,0 +1,50 @@
+@using Radzen
+@using Radzen.Blazor
+@using Sensor.Servicios
+
+<div class="grafica-mediciones" role="img" aria-label="@Descripcion">
+    @if (Datos.Length == 0)
+    {
+        <div class="grafica-vacia">Esperando mediciones para iniciar la gráfica…</div>
+    }
+    else
+    {
+        <RadzenChart @ref="_chart" Style="height:100%;width:100%">
+            <RadzenAreaSeries TItem="PuntoGeneracion" Data="@Datos" CategoryProperty="FechaHora"
+                              ValueProperty="ValorGenerado" Title="Generación" Stroke="#ffc400"
+                              StrokeWidth="2" Fill="rgba(255, 204, 0, 0.16)">
+                <RadzenMarkers Visible="true" MarkerType="MarkerType.Circle" Size="4" />
+            </RadzenAreaSeries>
+            <RadzenCategoryAxis Min="@Inicio" Max="@Fin" FormatString="{0:HH:mm:ss}">
+                <RadzenGridLines Visible="true" Stroke="#e5ebf2" />
+            </RadzenCategoryAxis>
+            <RadzenValueAxis Min="0" Formatter="@(v => $"{v:N0} W")">
+                <RadzenGridLines Visible="true" Stroke="#e5ebf2" />
+            </RadzenValueAxis>
+            <RadzenLegend Visible="false" />
+        </RadzenChart>
+    }
+</div>
+
+@code {
+    [Parameter] public PuntoGeneracion[] Datos { get; set; } = [];
+    [Parameter] public string Descripcion { get; set; } = "Generación en W durante la sesión";
+    private RadzenChart? _chart;
+    private PuntoGeneracion[]? _anteriores;
+    private bool _refrescar;
+    private DateTime Inicio => Datos[0].FechaHora.AddSeconds(-5);
+    private DateTime Fin => Datos[^1].FechaHora.AddSeconds(5);
+    protected override void OnParametersSet()
+    {
+        _refrescar = !ReferenceEquals(_anteriores, Datos);
+        _anteriores = Datos;
+    }
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (_refrescar && _chart is not null && Datos.Length > 0)
+        {
+            _refrescar = false;
+            await _chart.Reload();
+        }
+    }
+}
