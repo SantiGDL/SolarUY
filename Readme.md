@@ -136,6 +136,26 @@ MySQL debe estar disponible al arrancar SolarUy: en `Development` se aplican
 las migraciones antes de que el servidor comience a escuchar. Keycloak debe
 estar disponible para iniciar sesión en las páginas protegidas.
 
+### Comandos útiles de Docker
+
+Ejecutar estos comandos desde la raíz del repositorio, en la terminal donde
+esté disponible Docker Compose (PowerShell con Docker Desktop o Ubuntu/WSL 2
+con Docker Engine):
+
+| Comando | Uso |
+| --- | --- |
+| `docker compose up -d` | Iniciar MySQL y Keycloak. |
+| `docker compose ps -a` | Ver el estado de los servicios. |
+| `docker compose logs --tail 50 mysql` | Ver los últimos mensajes de MySQL. |
+| `docker compose logs --tail 50 keycloak` | Ver los últimos mensajes de Keycloak. |
+| `docker compose exec mysql mysql -uroot -p` | Abrir la consola de MySQL. |
+| `docker compose stop` | Detener los servicios conservando los datos. |
+
+Al entrar a MySQL con `-p`, usar la contraseña root con la que se inicializó
+el volumen. Si el volumen ya existía, cambiar `.env` no cambia esa contraseña
+ni la del usuario de la aplicación. Para administrar Keycloak, abrir
+`http://localhost:8080/admin/`; no hace falta entrar al contenedor.
+
 ### Preparación inicial
 
 Los siguientes comandos PowerShell se ejecutan desde la raíz del repositorio.
@@ -146,13 +166,23 @@ en Windows, donde se ejecutará SolarUy.
 1. Crear la configuración local, si todavía no existe:
 
    ```powershell
-   Copy-Item .env.example .env
+   powershell -NoProfile -ExecutionPolicy Bypass -File .\Scripts\Configurar-EntornoLocal.ps1
    ```
 
-   Editar `.env` y reemplazar los valores de ejemplo de `MYSQL_ROOT_PASSWORD`,
-   `MYSQL_PASSWORD` y `KEYCLOAK_BOOTSTRAP_PASSWORD`. `MYSQL_USER` tiene como valor
-   inicial `solaruy_app` y `KEYCLOAK_BOOTSTRAP_ADMIN`, `admin`.
+   El asistente pide las tres contraseñas en texto visible y pregunta si se
+   quieren cambiar los usuarios predeterminados `solaruy_app` y `admin`. Crea
+   `.env` y configura User Secrets con el mismo usuario y contraseña de MySQL.
+   Si ya existe `.env`, se detiene sin modificarlo ni cambiar User Secrets:
+   para volver a usarlo hay que eliminar `.env` manualmente, o seguir los pasos
+   manuales que figuran a continuación. El asistente está destinado a la
+   preparación inicial; no actualiza contraseñas de volúmenes existentes.
    `.env` está excluido de Git y sus credenciales no deben publicarse.
+
+   Como alternativa manual, copiar el ejemplo y reemplazar sus contraseñas:
+
+   ```powershell
+   Copy-Item .env.example .env
+   ```
 
 2. Iniciar los servicios y comprobar su estado:
 
@@ -167,7 +197,8 @@ en Windows, donde se ejecutará SolarUy.
    El realm `solaruy` y el cliente OIDC se importan desde
    [solaruy-realm.json](SolarUyKeycloak/solaruy-realm.json) al crear el entorno.
 
-3. Configurar la conexión de la aplicación mediante User Secrets:
+3. Si no se utilizó el asistente, configurar la conexión de la aplicación
+   mediante User Secrets:
 
    ```powershell
    dotnet user-secrets set "ConnectionStrings:SolarUy" "Server=localhost;Port=3306;Database=solaruy;User=solaruy_app;Password=REEMPLAZAR_PASSWORD;" --project SolarUy/SolarUy.csproj
@@ -191,11 +222,36 @@ El perfil HTTPS utiliza `https://localhost:7196` y requiere un certificado de
 desarrollo confiable. La configuración local de Keycloak ya está en
 [appsettings.Development.json](SolarUy/appsettings.Development.json).
 
-Para acceder al panel, crear un usuario en el realm `solaruy` desde la consola
-de Keycloak en `http://localhost:8080/admin/`, utilizando las credenciales
-administrativas de `.env`. Asignar una contraseña al usuario y el rol de realm
-`ADMIN` si necesita realizar operaciones restringidas a administradores. El
-administrador de Keycloak no es automáticamente un usuario de SolarUy.
+Después de definir las credenciales administrativas locales y levantar los
+contenedores, abrir la consola de Keycloak en `http://localhost:8080/admin/`
+(también se puede llegar desde `http://localhost:8080/`). Iniciar sesión con
+el usuario `KEYCLOAK_BOOTSTRAP_ADMIN` y la contraseña
+`KEYCLOAK_BOOTSTRAP_PASSWORD` definidos en `.env`.
+
+![Consola de administración de Keycloak después de iniciar sesión](Docs/Keyloak1.png)
+
+Seleccionar el realm `solaruy` y abrir **Users** en la barra lateral.
+
+![Menú lateral de Keycloak con la opción Users](Docs/Keyloak2.png)
+
+Elegir **Create new user** y completar el formulario.
+
+![Listado de usuarios del realm solaruy con el botón Create new user](Docs/Keyloak3.png)
+
+![Formulario de creación de usuario en Keycloak](Docs/Keyloak4.png)
+
+**Required user actions** permite exigir acciones que el usuario deberá
+completar para iniciar sesión, como cambiar la contraseña o configurar otro
+método de autenticación. En esta configuración se deja vacío porque solo se
+pide usuario y contraseña.
+
+Después de crear el usuario, abrir **Credentials**
+para asignarle una contraseña; desactivar **Temporary** si no se quiere exigir
+un cambio de contraseña en el primer inicio de sesión. Para permitirle
+operaciones restringidas a administradores de SolarUy, asignarle el rol de
+realm `ADMIN` desde **Role mapping**. Finalmente, iniciar sesión en SolarUy
+con este usuario nuevo. El administrador de Keycloak no es automáticamente
+un usuario de SolarUy.
 Esta configuración de Keycloak utiliza `start-dev` y está destinada al desarrollo local.
 
 ### Uso diario y problemas de arranque
