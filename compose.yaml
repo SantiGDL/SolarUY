@@ -1,4 +1,16 @@
 services:
+  # Evaluación local con base interna H2; no usar para producción.
+  sonarqube:
+    image: sonarqube:26.10.0.133078-community
+    environment:
+      SONAR_ES_BOOTSTRAP_CHECKS_DISABLE: "true"
+    ports:
+      - "127.0.0.1:9000:9000"
+    volumes:
+      - solaruy_sonarqube_data:/opt/sonarqube/data
+      - solaruy_sonarqube_extensions:/opt/sonarqube/extensions
+      - solaruy_sonarqube_logs:/opt/sonarqube/logs
+
   mysql:
     image: mysql:8.4
     environment:
@@ -40,5 +52,8 @@ services:
       - solaruy_keycloak_data:/opt/keycloak/data/h2
 
 volumes:
+  solaruy_sonarqube_data:
+  solaruy_sonarqube_extensions:
+  solaruy_sonarqube_logs:
   solaruy_mysql_data:
   solaruy_keycloak_data:
