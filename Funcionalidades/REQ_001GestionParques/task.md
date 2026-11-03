@@ -23,6 +23,9 @@ persistencia tras reinicio.
 - [x] Proteger el panel, consulta y registro con la política de acceso acordada.
 - [x] Añadir inicio/cierre de sesión y formulario/listado de parques.
 - [x] Mostrar la cantidad de parques en el panel administrativo.
+- [x] Mostrar un tablero visual interactivo con los parques y los nodos
+  asociados; permitir descubrir nodos al pasar el cursor, enfocar o seleccionar
+  un parque.
 
 ## Entorno y pruebas
 

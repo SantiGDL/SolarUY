@@ -11,14 +11,17 @@ SolarUy.
 
 - Consultar los parques registrados.
 - Registrar un parque con nombre y dirección.
+- Visualizar en la parte superior de la gestión un tablero interactivo de los
+  parques y sus nodos asociados.
 - Persistir los datos en MySQL local usando Entity Framework Core.
 - Integrar la gestión en el monolito Blazor Web App con Interactive Server.
 - Exigir autenticación con Keycloak en el panel y autorizar el registro solo a
   usuarios con el rol `ADMIN`.
 
 Quedan fuera de esta etapa la modificación y eliminación de parques, la gestión
-de nodos y paneles, las mediciones, el mantenimiento y el proveedor de identidad
-institucional/de producción.
+de paneles, las mediciones, el mantenimiento y el proveedor de identidad
+institucional/de producción. Los nodos se gestionan desde el flujo asociado a
+cada parque.
 
 ## Reglas y validaciones
 
