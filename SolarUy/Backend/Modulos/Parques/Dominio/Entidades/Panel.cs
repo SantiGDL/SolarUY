@@ -18,6 +18,12 @@ public class Panel
 
     public int NodoId { get; set; }
 
+    public bool Deshabilitado { get; private set; }
+
+    public void Habilitar() => Deshabilitado = false;
+
+    public void Deshabilitar() => Deshabilitado = true;
+
     public static Panel Crear(
         int nodoId,
         EstadoPanel estado,

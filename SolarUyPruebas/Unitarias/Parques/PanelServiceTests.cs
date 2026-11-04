@@ -136,6 +136,12 @@ public sealed class PanelServiceTests
 
     private sealed class RepositorioFalso : IPanelRepositorio
     {
+        public Task CambiarHabilitacionAsync(Panel panel, CancellationToken cancellationToken = default)
+        {
+            var existente = Paneles.Single(p => p.Id == panel.Id);
+            if (panel.Deshabilitado) existente.Deshabilitar(); else existente.Habilitar();
+            return Task.CompletedTask;
+        }
         public List<Panel> Paneles { get; } = [];
         public bool ConsultaRealizada { get; private set; }
 

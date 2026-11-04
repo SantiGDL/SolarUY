@@ -1,0 +1,98 @@
+@implements IAsyncDisposable
+
+<PageTitle>SolarUy | Producción</PageTitle>
+
+<div class="mediciones-page">
+    <section class="mediciones-hero">
+        <div class="mediciones-heading">
+            <h1>Generación en tiempo real</h1>
+            <span class="estado-vivo @(Conectado ? "" : "sin-conexion")"><IconoMediciones Nombre="estado" />@(Conectado ? "En vivo" : "Sin conexión")</span>
+        </div>
+        <p class="mediciones-descripcion">Consultá el estado y la producción de tus paneles.</p>
+        <div class="mediciones-selectores">
+            <div><label for="parque-mediciones">Parque solar</label><select id="parque-mediciones" value="@_parquePendiente" @onchange="CambiarParque" disabled="@ControlesDeshabilitados">
+                @foreach (var parque in _catalogo) { <option value="@parque.Id">@parque.Nombre</option> }
+            </select></div>
+            <div><label for="nodo-mediciones">Nodo</label><select id="nodo-mediciones" value="@_nodoPendiente" @onchange="CambiarNodo" disabled="@(ControlesDeshabilitados || NodosPendientes.Count == 0)">
+                @foreach (var nodo in NodosPendientes) { <option value="@nodo.Id">@nodo.Nombre</option> }
+            </select></div>
+            <div><label for="panel-mediciones">Panel</label><select id="panel-mediciones" value="@(_panelPendienteId?.ToString() ?? "")" @onchange="CambiarPanel" disabled="@(_cargando || NodoPendiente is null)">
+                <option value="">Todos los paneles</option>
+                @foreach (var panel in NodoPendiente?.Paneles ?? []) { <option value="@panel.Id">Panel @panel.Id.ToString("D2")</option> }
+            </select></div>
+            <button class="mediciones-conectar" disabled="@(!PuedeConectar)" @onclick="AplicarAsync">@if (_cargando) { <span class="spinner-border spinner-border-sm" aria-hidden="true"></span> }Conectar</button>
+            <div class="mediciones-conexion @(Conectado ? "" : "sin-conexion")" role="status">
+                <IconoMediciones Nombre="estado" /><div><strong>@(Conectado ? "Conectado" : "Desconectado")</strong><small>@(Conectado ? "Datos en tiempo real" : "Guardado no disponible")</small></div>
+            </div>
+        </div>
+    </section>
+
+    @if (_cargando)
+    {
+        <div class="mediciones-carga" role="status"><span class="spinner-border spinner-border-sm" aria-hidden="true"></span> Cargando selección…</div>
+    }
+    @if (_error is not null)
+    {
+        <div class="alert alert-warning" role="alert">@_error <button class="btn btn-sm btn-outline-primary" disabled="@_cargando" @onclick="CargarAsync">Actualizar catálogo</button></div>
+    }
+    @if (!_cargando && _catalogo.Length > 0 && _estado?.Confirmado != true)
+    {
+        <div class="mediciones-carga" role="status"><span class="spinner-border spinner-border-sm" aria-hidden="true"></span>@(_estado?.Estado ?? "Iniciando motor WebAssembly…")</div>
+    }
+    @if (!_cargando && _catalogo.Length == 0 && _error is null)
+    {
+        <div class="alert alert-info">No hay parques con nodos que tengan paneles. Registrá paneles para utilizar el simulador.</div>
+    }
+    @if (HayCambiosPendientes)
+    {
+        <p class="mediciones-pendiente" role="status">Selección pendiente de Conectar: los selectores muestran el nodo preparado. Los indicadores, la gráfica, la ficha y la tabla siguen mostrando @NombreParqueActivo / @NodoActivo?.Nombre / @(_panelId is null ? "Todos los paneles" : $"Panel {_panelId.Value:D2}").</p>
+    }
+    @if (_vista is not null && NodoActivo is not null)
+    {
+        <section class="mediciones-potencia" aria-label="Generación actual">
+            <div class="potencia-referencia"><div class="mediciones-rayo"><IconoMediciones Nombre="rayo" /></div><div><span>Potencia</span><strong>@Formato(PotenciaVisible) W</strong>@if (_panelId is null) { <small>Total de los paneles</small> }</div></div>
+            <div class="potencia-generada"><span><IconoMediciones Nombre="estado" />Generando ahora</span><strong>@(_vista.Paneles.Any(p => (_panelId is null || p.Panel.Id == _panelId) && p.Valor is not null) ? $"{Formato(GeneracionVisible)} W" : "—")</strong>@if (_panelId is null) { <small>Total generado actualmente</small> }</div>
+        </section>
+
+        <div class="mediciones-fila-central">
+            <section class="mediciones-card mediciones-grafica">
+                <h2>Generación en tiempo real</h2>
+                <GraficaMediciones Datos="_serie" Descripcion="@($"Generación de {NombreParqueActivo}, {NodoActivo.Nombre}, {(_panelId is null ? "todos los paneles" : $"panel {_panelId}")} en W durante esta sesión")" />
+            </section>
+            <section class="mediciones-card mediciones-info">
+                <h2>@(_panelId is null ? "Información del nodo" : "Información del panel")</h2>
+                <dl>
+                    @if (PanelVisible is not null) { <div><dt>Panel</dt><dd>Panel @PanelVisible.Id.ToString("D2")</dd></div> }
+                    <div><dt>Parque</dt><dd>@NombreParqueActivo</dd></div>
+                    <div><dt>Nodo</dt><dd>@NodoActivo.Nombre</dd></div>
+                    @if (PanelVisible is not null)
+                    {
+                        <div><dt>Orientación</dt><dd>@PanelVisible.Orientacion</dd></div>
+                        <div><dt>Estado</dt><dd><span class="mediciones-badge @ClaseEstado(PanelVisible.Estado)"><IconoMediciones Nombre="estado" />@PanelVisible.Estado</span></dd></div>
+                    }
+                    else
+                    {
+                        <div><dt>Ubicación</dt><dd>@NodoActivo.Ubicacion</dd></div>
+                        <div><dt>Paneles</dt><dd>@NodoActivo.Paneles.Count</dd></div>
+                        <div><dt>Operativos</dt><dd>@NodoActivo.Paneles.Count(p => p.Estado == "Bueno")</dd></div>
+                    }
+                </dl>
+                @if (_panelId is not null)
+                {
+                    <div class="deshabilitar-contenedor"><button class="deshabilitar-panel" disabled="@(_cargando || _guardando || _estado?.Version != _vista?.Version)" @onclick="CambiarHabilitacionAsync">@if (_guardando) { <span class="spinner-border spinner-border-sm" aria-hidden="true"></span> }<IconoMediciones Nombre="cancelar" />@(PanelVisible!.Deshabilitado ? "Habilitar panel" : "Deshabilitar panel")</button><small>@(PanelVisible!.Deshabilitado ? "Deshabilitado · sin generación" : "Habilitado")</small></div>
+                }
+            </section>
+        </div>
+
+        <section class="mediciones-card mediciones-tabla">
+            <h2>@(_panelId is null ? "Paneles del nodo" : "Panel seleccionado")</h2>
+            <div class="table-responsive"><table><thead><tr><th>Panel</th><th>Orientación</th><th>Potencia</th><th>Generando ahora</th><th>Estado</th>@if (_panelId is null) { <th>Acción</th> }</tr></thead><tbody>
+            @foreach (var panel in PanelesVisibles)
+            {
+                <tr><td>Panel @panel.Id.ToString("D2") @if (panel.Deshabilitado) { <small>· Deshabilitado</small> }</td><td>@panel.Orientacion</td><td>@Formato(panel.PotenciaActual) W</td><td><strong>@ValorPanel(panel.Id)</strong></td><td><span class="mediciones-badge @ClaseEstado(panel.Estado)"><IconoMediciones Nombre="estado" />@panel.Estado</span></td>@if (_panelId is null) { <td><button class="ver-detalle" disabled="@_cargando" @onclick="() => SeleccionarPanel(panel.Id)">Ver detalle</button></td> }</tr>
+            }
+            </tbody></table></div>
+        </section>
+        <footer class="mediciones-contexto"><span>Simulación · @NombreParqueActivo / @NodoActivo.Nombre / @(_panelId is null ? "Todos los paneles" : $"Panel {_panelId.Value:D2}")</span><span role="status">@_estado?.Estado </span></footer>
+    }
+</div>

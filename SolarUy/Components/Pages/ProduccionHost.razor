@@ -1,0 +1,20 @@
+@page "/admin/mediciones"
+@attribute [Microsoft.AspNetCore.Authorization.Authorize(Roles = "ADMIN")]
+@inject Microsoft.AspNetCore.Components.Authorization.AuthenticationStateProvider Autenticacion
+@inject SolarUy.Backend.Modulos.Mediciones.Aplicacion.Implementaciones.MedicionesService Servicio
+@using SolarUy.Components.Servicios
+
+@if (_sesionId != Guid.Empty)
+{
+    <Mediciones SesionId="_sesionId" @rendermode="@(new InteractiveServerRenderMode(prerender: false))" />
+    <Sensor.Components.MotorSensor SesionId="_sesionId" @rendermode="@(new InteractiveWebAssemblyRenderMode(prerender: false))" />
+}
+
+@code {
+    private Guid _sesionId;
+    protected override async Task OnInitializedAsync()
+    {
+        var usuario = (await Autenticacion.GetAuthenticationStateAsync()).User;
+        _sesionId = Servicio.CrearSesion(AccesoProduccionActual.Desde(usuario));
+    }
+}

@@ -1,0 +1,25 @@
+@implements IAsyncDisposable
+@inject Sensor.Servicios.MedicionesCliente Cliente
+
+@code {
+    [Parameter] public Guid SesionId { get; set; }
+    private readonly CancellationTokenSource _vida = new();
+    private Task? _inicio;
+    protected override Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender) _inicio = IniciarAsync();
+        return Task.CompletedTask;
+    }
+    private async Task IniciarAsync()
+    {
+        try { await Cliente.IniciarAsync(SesionId, _vida.Token); }
+        catch (OperationCanceledException) when (_vida.IsCancellationRequested) { }
+    }
+    public async ValueTask DisposeAsync()
+    {
+        await _vida.CancelAsync();
+        if (_inicio is not null) await _inicio;
+        await Cliente.DisposeAsync();
+        _vida.Dispose();
+    }
+}

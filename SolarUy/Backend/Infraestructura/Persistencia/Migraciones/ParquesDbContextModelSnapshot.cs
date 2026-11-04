@@ -50,19 +50,24 @@ namespace SolarUy.Backend.Infraestructura.Persistencia.Migraciones
                         .ValueGeneratedOnAdd()
                         .HasColumnType("int");
 
+                    b.Property<bool>("Deshabilitado")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("tinyint(1)")
+                        .HasDefaultValue(false);
+
                     b.Property<int>("Estado")
                         .HasColumnType("int");
 
                     b.Property<int>("NodoId")
                         .HasColumnType("int");
 
-                    b.Property<double>("PotenciaActual")
-                        .HasColumnType("double");
-
                     b.Property<string>("Orientacion")
                         .IsRequired()
                         .HasMaxLength(50)
                         .HasColumnType("varchar(50)");
+
+                    b.Property<double>("PotenciaActual")
+                        .HasColumnType("double");
 
                     b.HasKey("Id");
 
