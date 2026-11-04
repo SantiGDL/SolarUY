@@ -4,6 +4,8 @@ namespace SolarUy.Backend.Modulos.Parques.Aplicacion.Contratos;
 
 public interface IPanelRepositorio
 {
+    Task CambiarHabilitacionAsync(SolarUy.Backend.Modulos.Parques.Dominio.Entidades.Panel panel,
+        CancellationToken cancellationToken = default);
     Task<IReadOnlyList<Panel>> ListarAsync(CancellationToken cancellationToken = default);
 
     Task<Panel?> ObtenerPorIdAsync(

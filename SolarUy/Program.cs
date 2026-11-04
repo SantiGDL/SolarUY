@@ -75,6 +75,12 @@ builder.Services.AddDbContextFactory<MedicionesDbContext>(options =>
 builder.Services.AddScoped<IMedicionRepository, MedicionRepository>();
 builder.Services.AddScoped<ICatalogoProduccion, CatalogoProduccionService>();
 builder.Services.AddScoped<MedicionesService>();
+builder.Services.AddSingleton<SolarUy.Backend.Modulos.Mediciones.Aplicacion.Contratos.ISesionesProduccion,
+    SolarUy.Backend.Modulos.Mediciones.Infraestructura.Sesiones.SesionesProduccion>();
+builder.Services.AddScoped<SolarUy.Backend.Modulos.Mediciones.Aplicacion.Contratos.IControlMotor,
+    SolarUy.Backend.Modulos.Mediciones.Infraestructura.SignalR.ControlMotor>();
+Radzen.ServiceCollectionExtensions.AddRadzenComponents(builder.Services);
+builder.Services.AddHostedService<SolarUy.Backend.Modulos.Mediciones.Infraestructura.Sesiones.LimpiezaSesionesService>();
 
 var app = builder.Build();
 
@@ -124,7 +130,7 @@ app.MapHub<MedicionesHub>("/hubs/mediciones");
 app.MapRazorComponents<App>()
     .AddInteractiveServerRenderMode()
     .AddInteractiveWebAssemblyRenderMode()
-    .AddAdditionalAssemblies(typeof(Sensor.Pages.Counter).Assembly);
+    .AddAdditionalAssemblies(typeof(Sensor.Components.MotorSensor).Assembly);
 
 if (app.Environment.IsDevelopment())
 {

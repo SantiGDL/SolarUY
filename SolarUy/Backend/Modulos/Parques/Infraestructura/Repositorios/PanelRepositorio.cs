@@ -114,6 +114,7 @@ public sealed class PanelRepositorio(
         {
             await using var context = await contextFactory.CreateDbContextAsync(cancellationToken);
             context.Entry(panel).State = EntityState.Modified;
+            context.Entry(panel).Property(item => item.Deshabilitado).IsModified = false;
             await context.SaveChangesAsync(cancellationToken);
         }
         catch (DbUpdateException exception)
@@ -137,6 +138,22 @@ public sealed class PanelRepositorio(
                 "Falló la actualización del panel {PanelId}.",
                 panel.Id);
             throw new PanelesPersistenciaException("No se pudo actualizar el panel.", exception);
+        }
+    }
+
+    public async Task CambiarHabilitacionAsync(Panel panel, CancellationToken cancellationToken = default)
+    {
+        try
+        {
+            await using var context = await contextFactory.CreateDbContextAsync(cancellationToken);
+            context.Attach(panel);
+            context.Entry(panel).Property(item => item.Deshabilitado).IsModified = true;
+            await context.SaveChangesAsync(cancellationToken);
+        }
+        catch (Exception exception) when (exception is DbUpdateException or MySqlException)
+        {
+            logger.LogError(exception, "Falló el cambio de habilitación del panel {PanelId}.", panel.Id);
+            throw new PanelesPersistenciaException("No se pudo cambiar la habilitación del panel.", exception);
         }
     }
 

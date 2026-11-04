@@ -1,8 +1,7 @@
 namespace Sensor.Contratos.Mediciones;
 
-public sealed record PanelMedicionesDto(int Id, double PotenciaActual, string Orientacion, string Estado);
-public sealed record NodoMedicionesDto(int Id, string Nombre, string Ubicacion, PanelMedicionesDto[] Paneles);
-public sealed record ParqueMedicionesDto(int Id, string Nombre, NodoMedicionesDto[] Nodos);
-public sealed record SeleccionMedicionesDto(int ParqueId, int NodoId, int? PanelId);
-public sealed record LecturaMedicionesDto(int ParqueId, int NodoId, int PanelId, double ValorGenerado, DateTimeOffset FechaHora);
-public sealed record EntregaMedicionesDto(int ParqueId, int NodoId, LecturaMedicionesDto[] Lecturas);
+public sealed record PanelMotorDto(int Id, double PotenciaActual, bool Deshabilitado, long RevisionEstado);
+public sealed record ConfiguracionMotorDto(Guid SesionId, long Version, int ParqueId, int NodoId, PanelMotorDto[] Paneles);
+public sealed record EstadoPanelMotorDto(Guid SesionId, long Version, int PanelId, bool Deshabilitado, long RevisionEstado);
+public sealed record LecturaMotorDto(int PanelId, long RevisionEstado, double ValorGenerado, DateTimeOffset FechaHora);
+public sealed record EntregaMotorDto(Guid SesionId, Guid EntregaId, long Version, int ParqueId, int NodoId, LecturaMotorDto[] Lecturas);
