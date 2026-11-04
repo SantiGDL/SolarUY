@@ -16,6 +16,10 @@ _ReSharper*/
 # Resultados generados por las pruebas
 TestResults/
 
+# Archivos temporales del análisis de SonarQube
+.sonarqube/
+.scannerwork/
+
 # Configuración y secretos locales
 .env
 .env.*
