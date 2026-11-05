@@ -9,6 +9,8 @@
   </PropertyGroup>
 
     <ItemGroup>
+      <PackageReference Include="PDFsharp-MigraDoc" Version="6.2.4" />
+      <PackageReference Include="System.Security.Cryptography.Pkcs" Version="10.0.13" />
       <ProjectReference Include="..\Sensor\Sensor.csproj" />
       <PackageReference Include="Radzen.Blazor" Version="12.1.10" />
       <PackageReference Include="Microsoft.AspNetCore.Components.WebAssembly.Server" Version="10.0.13" />
