@@ -1,5 +1,6 @@
 using Microsoft.EntityFrameworkCore;
 using SolarUy.Backend.Modulos.Parques.Dominio.Entidades;
+using SolarUy.Backend.Modulos.Tareas.Dominio.Entidades;
 
 namespace SolarUy.Backend.Infraestructura.Persistencia;
 
@@ -11,6 +12,8 @@ public sealed class ParquesDbContext(DbContextOptions<ParquesDbContext> options)
     public DbSet<Nodo> Nodos => Set<Nodo>();
 
     public DbSet<Panel> Paneles => Set<Panel>();
+
+    public DbSet<TareaMantenimiento> Tareas => Set<TareaMantenimiento>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -56,5 +59,23 @@ public sealed class ParquesDbContext(DbContextOptions<ParquesDbContext> options)
             .HasForeignKey(item => item.NodoId)
             .OnDelete(DeleteBehavior.Restrict);
         panel.HasIndex(item => item.NodoId);
+
+        var tarea = modelBuilder.Entity<TareaMantenimiento>();
+        tarea.ToTable("TareasMantenimiento");
+        tarea.HasKey(item => item.Id);
+        tarea.Property(item => item.Id).ValueGeneratedOnAdd();
+        tarea.Property(item => item.PanelId).IsRequired();
+        tarea.Property(item => item.TipoTarea).HasConversion<int>().IsRequired();
+        tarea.Property(item => item.Estado).HasConversion<int>().IsRequired();
+        tarea.Property(item => item.FechaCreada).HasColumnType("datetime(6)").IsRequired();
+        tarea.Property(item => item.FechaFinalizado).HasColumnType("datetime(6)");
+        tarea.Property(item => item.FechaRealizada).HasColumnType("datetime(6)");
+        tarea.Property(item => item.Observaciones).HasMaxLength(1000).IsRequired();
+        tarea.HasOne<Panel>()
+            .WithMany()
+            .HasForeignKey(item => item.PanelId)
+            .OnDelete(DeleteBehavior.Restrict);
+        tarea.HasIndex(item => item.PanelId);
+        tarea.HasIndex(item => item.Estado);
     }
 }

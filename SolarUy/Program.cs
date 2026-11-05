@@ -16,6 +16,9 @@ using SolarUy.Backend.Modulos.Mediciones.Infraestructura.Persistencia;
 using SolarUy.Backend.Modulos.Mediciones.Infraestructura.Repositorios;
 using SolarUy.Backend.Modulos.Mediciones.Interfaz.SignalR;
 using SolarUy.Backend.Modulos.Parques.Interfaz.Apis.Local.Contratos;
+using SolarUy.Backend.Modulos.Tareas.Aplicacion.Contratos;
+using SolarUy.Backend.Modulos.Tareas.Aplicacion.Implementaciones;
+using SolarUy.Backend.Modulos.Tareas.Infraestructura.Repositorios;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -66,9 +69,11 @@ builder.Services.AddDbContextFactory<ParquesDbContext>(options =>
 builder.Services.AddScoped<IParqueRepositorio, ParqueRepositorio>();
 builder.Services.AddScoped<INodoRepositorio, NodoRepositorio>();
 builder.Services.AddScoped<IPanelRepositorio, PanelRepositorio>();
+builder.Services.AddScoped<ITareaRepositorio, TareaRepositorio>();
 builder.Services.AddScoped<IParquesService, ParquesService>();
 builder.Services.AddScoped<INodosService, NodosService>();
 builder.Services.AddScoped<IPanelesService, PanelService>();
+builder.Services.AddScoped<ITareasService, TareasService>();
 builder.Services.AddScoped<IUsuarioActual, UsuarioActual>();
 builder.Services.AddDbContextFactory<MedicionesDbContext>(options =>
     options.UseMySQL(connectionString, mysql => mysql.MigrationsHistoryTable("__MedicionesMigrationsHistory")));

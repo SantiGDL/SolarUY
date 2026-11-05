@@ -4,6 +4,9 @@ using SolarUy.Backend.Modulos.Parques.Aplicacion.Excepciones;
 using SolarUy.Backend.Modulos.Parques.Aplicacion.Implementaciones;
 using SolarUy.Backend.Modulos.Parques.Dominio.Entidades;
 using SolarUy.Backend.Modulos.Parques.Dominio.Enums;
+using SolarUy.Backend.Modulos.Tareas.Aplicacion.Contratos;
+using SolarUy.Backend.Modulos.Tareas.Aplicacion.DTOs;
+using SolarUy.Backend.Modulos.Tareas.Dominio.Enums;
 
 namespace SolarUyPruebas.Unitarias.Parques;
 
@@ -81,6 +84,29 @@ public sealed class PanelServiceTests
         Assert.Empty(repositorio.Paneles);
     }
 
+    [Theory]
+    [InlineData(EstadoPanel.Intermedio, TipoMantenimiento.Limpieza)]
+    [InlineData(EstadoPanel.Rotura, TipoMantenimiento.Reparacion)]
+    public async Task RegistrarAsync_GeneraTareaSegunElEstadoDelPanel(
+        EstadoPanel estadoPanel,
+        TipoMantenimiento tipoEsperado)
+    {
+        var repositorio = new RepositorioFalso();
+        var tareas = new TareasFalsas();
+        var servicio = CrearServicio(repositorio, true, true, tareas);
+
+        var panel = await servicio.RegistrarAsync(new CrearPanelDto
+        {
+            NodoId = 3,
+            Estado = estadoPanel,
+            PotenciaActual = 10,
+            Orientacion = "Norte"
+        });
+
+        Assert.Equal((panel.Id, estadoPanel), Assert.Single(tareas.TareasAutomaticas));
+        Assert.Equal(tipoEsperado, tareas.UltimoTipoMantenimiento);
+    }
+
     [Fact]
     public async Task ActualizarAsync_ActualizaLosCamposDelPanel()
     {
@@ -108,6 +134,48 @@ public sealed class PanelServiceTests
     }
 
     [Fact]
+    public async Task ActualizarAsync_CreaTareaAlCambiarDeBuenoAIntermedio()
+    {
+        var repositorio = new RepositorioFalso();
+        var panel = Panel.Crear(3, EstadoPanel.Bueno, 40, "Este");
+        panel.Id = 1;
+        repositorio.Paneles.Add(panel);
+        var tareas = new TareasFalsas();
+        var servicio = CrearServicio(repositorio, true, true, tareas);
+
+        await servicio.ActualizarAsync(1, new CrearPanelDto
+        {
+            NodoId = 3,
+            Estado = EstadoPanel.Intermedio,
+            PotenciaActual = 40,
+            Orientacion = "Este"
+        });
+
+        Assert.Equal((1, EstadoPanel.Intermedio), Assert.Single(tareas.TareasAutomaticas));
+    }
+
+    [Fact]
+    public async Task ActualizarAsync_NoCreaTareaSiElEstadoNoCambio()
+    {
+        var repositorio = new RepositorioFalso();
+        var panel = Panel.Crear(3, EstadoPanel.Intermedio, 40, "Este");
+        panel.Id = 1;
+        repositorio.Paneles.Add(panel);
+        var tareas = new TareasFalsas();
+        var servicio = CrearServicio(repositorio, true, true, tareas);
+
+        await servicio.ActualizarAsync(1, new CrearPanelDto
+        {
+            NodoId = 3,
+            Estado = EstadoPanel.Intermedio,
+            PotenciaActual = 50,
+            Orientacion = "Este"
+        });
+
+        Assert.Empty(tareas.TareasAutomaticas);
+    }
+
+    [Fact]
     public async Task EliminarAsync_EliminaUnPanelExistente()
     {
         var repositorio = new RepositorioFalso();
@@ -124,14 +192,51 @@ public sealed class PanelServiceTests
     private static IPanelesService CrearServicio(
         RepositorioFalso repositorio,
         bool autenticado,
-        bool administrador) =>
-        new PanelService(repositorio, new UsuarioFalso(autenticado, administrador));
+        bool administrador,
+        TareasFalsas? tareas = null) =>
+        new PanelService(
+            repositorio,
+            new UsuarioFalso(autenticado, administrador),
+            tareas ?? new TareasFalsas());
 
     private sealed class UsuarioFalso(bool autenticado, bool administrador) : IUsuarioActual
     {
         public Task<bool> EstaAutenticadoAsync() => Task.FromResult(autenticado);
 
         public Task<bool> EsAdministradorAsync() => Task.FromResult(administrador);
+    }
+
+    private sealed class TareasFalsas : ITareasService
+    {
+        public List<(int PanelId, EstadoPanel Estado)> TareasAutomaticas { get; } = [];
+        public TipoMantenimiento UltimoTipoMantenimiento { get; private set; }
+
+        public Task<IReadOnlyList<TareaDto>> ObtenerTodasAsync(
+            CancellationToken cancellationToken = default) =>
+            Task.FromResult<IReadOnlyList<TareaDto>>([]);
+
+        public Task<TareaDto> CrearAsync(
+            CrearTareaDto solicitud,
+            CancellationToken cancellationToken = default) =>
+            throw new NotImplementedException();
+
+        public Task<TareaDto?> CrearAutomaticaAsync(
+            int panelId,
+            EstadoPanel estadoPanel,
+            CancellationToken cancellationToken = default)
+        {
+            TareasAutomaticas.Add((panelId, estadoPanel));
+            UltimoTipoMantenimiento = estadoPanel == EstadoPanel.Intermedio
+                ? TipoMantenimiento.Limpieza
+                : TipoMantenimiento.Reparacion;
+            return Task.FromResult<TareaDto?>(null);
+        }
+
+        public Task<TareaDto> CompletarAsync(
+            int id,
+            CompletarTareaDto solicitud,
+            CancellationToken cancellationToken = default) =>
+            throw new NotImplementedException();
     }
 
     private sealed class RepositorioFalso : IPanelRepositorio
