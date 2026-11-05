@@ -4,7 +4,11 @@
 @attribute [Microsoft.AspNetCore.Authorization.Authorize]
 @using SolarUy.Backend.Modulos.Parques.Aplicacion.Contratos
 @using SolarUy.Backend.Modulos.Parques.Aplicacion.DTOs
+@using SolarUy.Backend.Modulos.Tareas.Aplicacion.Contratos
+@using SolarUy.Backend.Modulos.Tareas.Aplicacion.DTOs
+@using SolarUy.Backend.Modulos.Tareas.Dominio.Enums
 @inject IParquesService ServicioParques
+@inject ITareasService ServicioTareas
 @inject ILogger<PanelAdmin> Logger
 
 <PageTitle>SolarUy | Panel administrativo</PageTitle>
@@ -26,7 +30,7 @@
 <section class="summary-grid" aria-label="Resumen de la plataforma">
     <article class="summary-card"><img src="images/IconoPanelSolar.png" alt="" /><div><strong>@(parques?.Count.ToString() ?? "—")</strong><h2>Parques registrados</h2><p>Parques solares disponibles</p></div></article>
     <article class="summary-card"><img src="images/IconoProduccion.png" alt="" /><div><strong>Sin datos</strong><h2>Producción actual</h2><p>Sin mediciones registradas</p></div></article>
-    <article class="summary-card"><img src="images/IconoTareas.png" alt="" /><div><strong>Sin datos</strong><h2>Tareas pendientes</h2><p>Información no disponible</p></div></article>
+    <article class="summary-card"><img src="images/IconoTareas.png" alt="" /><div><strong>@(tareasPendientes?.ToString() ?? "—")</strong><h2>Tareas pendientes</h2><p><a href="/admin/tareas">Ver tareas</a></p></div></article>
 </section>
 
 <section class="admin-card quick-section" aria-labelledby="quick-title">
@@ -35,7 +39,7 @@
     <div class="quick-grid">
         <a href="/admin/parques" class="quick-card"><img src="images/IconoPanelSolar.png" alt="" /><strong>Gestionar parques</strong><span>Consultá y registrá parques solares.</span><small>Abrir gestión</small></a>
         <button type="button" class="quick-card" disabled><img src="images/IconoProduccion.png" alt="" /><strong>Ver producción</strong><span>Consultá la generación de energía de tus parques.</span><small>Próximamente</small></button>
-        <button type="button" class="quick-card" disabled><img src="images/IconoTareas.png" alt="" /><strong>Gestionar tareas</strong><span>Organizá y seguí las tareas de mantenimiento.</span><small>Próximamente</small></button>
+        <a href="/admin/tareas" class="quick-card"><img src="images/IconoTareas.png" alt="" /><strong>Gestionar tareas</strong><span>Organizá y seguí las tareas de mantenimiento.</span><small>Abrir gestión</small></a>
         <button type="button" class="quick-card" disabled><img src="images/IconoReportes.png" alt="" /><strong>Reportes</strong><span>Consultá la información y el rendimiento de tus parques.</span><small>Próximamente</small></button>
     </div>
 
@@ -54,6 +58,7 @@
 
 @code {
     private IReadOnlyList<ParqueDto>? parques;
+    private int? tareasPendientes;
     private string errorCarga = string.Empty;
 
     protected override async Task OnInitializedAsync()
@@ -61,11 +66,18 @@
         try
         {
             parques = await ServicioParques.ObtenerTodosAsync();
+            var tareas = await ServicioTareas.ObtenerTodasAsync();
+            tareasPendientes = tareas.Count(tarea => tarea.Estado != EstadoTarea.Completada);
         }
         catch (SolarUy.Backend.Modulos.Parques.Aplicacion.Excepciones.ParquesPersistenciaException exception)
         {
             Logger.LogError(exception, "No se pudo cargar el resumen de parques del panel.");
             errorCarga = "No se pudo cargar el resumen de parques.";
+        }
+        catch (SolarUy.Backend.Modulos.Tareas.Aplicacion.Excepciones.TareasPersistenciaException exception)
+        {
+            Logger.LogError(exception, "No se pudo cargar el resumen de tareas del panel.");
+            errorCarga = "No se pudo cargar el resumen de tareas.";
         }
     }
 }

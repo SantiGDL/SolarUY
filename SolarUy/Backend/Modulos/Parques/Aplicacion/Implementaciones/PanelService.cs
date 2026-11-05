@@ -2,12 +2,15 @@ using SolarUy.Backend.Modulos.Parques.Aplicacion.Contratos;
 using SolarUy.Backend.Modulos.Parques.Aplicacion.DTOs;
 using SolarUy.Backend.Modulos.Parques.Aplicacion.Excepciones;
 using SolarUy.Backend.Modulos.Parques.Dominio.Entidades;
+using SolarUy.Backend.Modulos.Tareas.Aplicacion.Contratos;
+using SolarUy.Backend.Modulos.Parques.Dominio.Enums;
 
 namespace SolarUy.Backend.Modulos.Parques.Aplicacion.Implementaciones;
 
 public sealed class PanelService(
     IPanelRepositorio repositorio,
-    IUsuarioActual usuarioActual) : IPanelesService
+    IUsuarioActual usuarioActual,
+    ITareasService tareasService) : IPanelesService
 {
     public async Task<IReadOnlyList<PanelDto>> ObtenerTodosAsync(
         CancellationToken cancellationToken = default)
@@ -65,6 +68,14 @@ public sealed class PanelService(
         }
 
         await repositorio.AgregarAsync(panel, cancellationToken);
+        if (panel.Estado != EstadoPanel.Bueno)
+        {
+            await tareasService.CrearAutomaticaAsync(
+                panel.Id,
+                panel.Estado,
+                cancellationToken);
+        }
+
         return Convertir(panel);
     }
 
@@ -89,6 +100,7 @@ public sealed class PanelService(
                 $"No existe el nodo con identificador {solicitud.NodoId}.");
         }
 
+        var estadoAnterior = panelActual.Estado;
         panelActual.Actualizar(
             solicitud.NodoId,
             solicitud.Estado,
@@ -96,6 +108,15 @@ public sealed class PanelService(
             solicitud.Orientacion);
 
         await repositorio.ActualizarAsync(panelActual, cancellationToken);
+        if (estadoAnterior != panelActual.Estado
+            && panelActual.Estado != EstadoPanel.Bueno)
+        {
+            await tareasService.CrearAutomaticaAsync(
+                panelActual.Id,
+                panelActual.Estado,
+                cancellationToken);
+        }
+
         return Convertir(panelActual);
     }
 
