@@ -1,0 +1,639 @@
+@rendermode InteractiveServer
+@page "/admin/tareas"
+@layout MainLayout
+@attribute [Microsoft.AspNetCore.Authorization.Authorize(Roles = "ADMIN")]
+@using SolarUy.Backend.Modulos.Parques.Aplicacion.Contratos
+@using SolarUy.Backend.Modulos.Parques.Aplicacion.DTOs
+@using SolarUy.Backend.Modulos.Parques.Aplicacion.Excepciones
+@using SolarUy.Backend.Modulos.Tareas.Aplicacion.Contratos
+@using SolarUy.Backend.Modulos.Tareas.Aplicacion.DTOs
+@using SolarUy.Backend.Modulos.Tareas.Aplicacion.Excepciones
+@using SolarUy.Backend.Modulos.Tareas.Dominio.Enums
+@using SolarUy.Backend.Modulos.Parques.Dominio.Enums
+@inject ITareasService ServicioTareas
+@inject IParquesService ServicioParques
+@inject INodosService ServicioNodos
+@inject IPanelesService ServicioPaneles
+@inject ILogger<Tareas> Logger
+
+<PageTitle>SolarUy | Mantenimiento</PageTitle>
+
+<main class="tasks-page">
+    <header class="tasks-hero">
+        <div class="tasks-hero-copy">
+            <p class="tasks-eyebrow"><span aria-hidden="true">✦</span> OPERACIONES · MANTENIMIENTO</p>
+            <h1>Centro de mantenimiento</h1>
+            <p>Elegí un parque para ver sus equipos y organizar las tareas, todo en un mismo lugar.</p>
+        </div>
+        <div class="tasks-hero-icon" aria-hidden="true">
+            <svg viewBox="0 0 96 96" fill="none">
+                <circle cx="48" cy="48" r="15" fill="currentColor" />
+                <path d="M48 8v12m0 56v12M8 48h12m56 0h12M19.7 19.7l8.5 8.5m39.6 39.6 8.5 8.5m0-56.6-8.5 8.5m-39.6 39.6-8.5 8.5"
+                      stroke="currentColor" stroke-linecap="round" stroke-width="5" />
+                <path d="m23 59 12-7 12 7 12-7 14 8v20H23V59Z" fill="#fff" fill-opacity=".92" />
+                <path d="M29 64h12v10H29zm22 0h12v10H51z" fill="#27865f" />
+            </svg>
+        </div>
+    </header>
+
+    @if (!string.IsNullOrWhiteSpace(mensajeError))
+    {
+        <div class="alert alert-danger mt-4" role="alert">@mensajeError</div>
+    }
+    @if (!string.IsNullOrWhiteSpace(mensajeExito))
+    {
+        <div class="alert alert-success mt-4" role="status">@mensajeExito</div>
+    }
+
+    @if (cargando)
+    {
+        <section class="tasks-card tasks-loading mt-4" role="status">
+            <span class="tasks-spinner" aria-hidden="true"></span>
+            <span>Cargando parques y tareas...</span>
+        </section>
+    }
+    else if (!puedeConsultar)
+    {
+        <section class="tasks-card tasks-empty mt-4">
+            <span class="tasks-empty-icon" aria-hidden="true">🔒</span>
+            <h2>Acceso restringido</h2>
+            <p>Tu usuario no tiene permisos para administrar las tareas.</p>
+        </section>
+    }
+    else if (parques.Count == 0)
+    {
+        <section class="tasks-card tasks-empty mt-4">
+            <span class="tasks-empty-icon" aria-hidden="true">☀</span>
+            <h2>Todavía no hay parques</h2>
+            <p>Registrá un parque para comenzar a organizar el mantenimiento.</p>
+            <a class="tasks-secondary-link" href="/admin/parques">Ir a gestión de parques <span aria-hidden="true">→</span></a>
+        </section>
+    }
+    else
+    {
+        <section class="tasks-card park-picker" aria-labelledby="park-picker-title">
+            <div class="park-picker-step" aria-hidden="true">01</div>
+            <div class="park-picker-content">
+                <label id="park-picker-title" for="tarea-parque">Primero, seleccioná un parque</label>
+                <p>Así vas a ver únicamente sus nodos, paneles y tareas.</p>
+                <InputSelect id="tarea-parque"
+                             class="form-select park-select"
+                             @bind-Value="parqueSeleccionadoId"
+                             @bind-Value:after="AlCambiarParqueAsync">
+                    <option value="">Elegí un parque...</option>
+                    @foreach (var parque in parques)
+                    {
+                        <option value="@parque.Id">@parque.Nombre · @parque.Direccion</option>
+                    }
+                </InputSelect>
+            </div>
+            @if (ParqueSeleccionado is not null)
+            {
+                <div class="park-picker-selected">
+                    <span class="park-online-dot" aria-hidden="true"></span>
+                    <span>Parque seleccionado</span>
+                </div>
+            }
+        </section>
+
+        @if (ParqueSeleccionado is not null)
+        {
+            <section class="park-overview" aria-label="Resumen del parque seleccionado">
+                <div class="park-title-block">
+                    <div class="park-title-icon" aria-hidden="true">☀</div>
+                    <div>
+                        <p class="tasks-eyebrow">VISTA DEL PARQUE</p>
+                        <h2>@ParqueSeleccionado.Nombre</h2>
+                        <p class="park-address">@ParqueSeleccionado.Direccion</p>
+                    </div>
+                </div>
+                <div class="park-metrics">
+                    <div class="park-metric"><strong>@nodos.Count</strong><span>Nodos</span></div>
+                    <div class="park-metric"><strong>@PanelesDelParque.Count</strong><span>Paneles</span></div>
+                    <div class="park-metric metric-attention"><strong>@PanelesConProblemas.Count</strong><span>Requieren atención</span></div>
+                    <div class="park-metric"><strong>@TareasDelParque.Count(tarea => tarea.Estado != EstadoTarea.Completada)</strong><span>Tareas abiertas</span></div>
+                </div>
+            </section>
+
+            <section class="tasks-card park-map-card" aria-labelledby="map-title">
+                <div class="tasks-section-heading">
+                    <div>
+                        <p class="tasks-eyebrow">DISTRIBUCIÓN DE EQUIPOS</p>
+                        <h2 id="map-title">Mapa del parque</h2>
+                    </div>
+                    <span class="map-scale-note">Vista esquemática · no a escala</span>
+                </div>
+                @if (cargandoNodos)
+                {
+                    <p class="map-message" role="status">Cargando nodos del parque...</p>
+                }
+                else if (nodos.Count == 0)
+                {
+                    <div class="map-message map-empty">
+                        <span aria-hidden="true">⌖</span>
+                        <strong>Este parque todavía no tiene nodos</strong>
+                        <p>Cuando registres nodos, su distribución aparecerá acá.</p>
+                    </div>
+                }
+                else
+                {
+                    <div class="park-map-board">
+                        <div class="map-board-label"><span aria-hidden="true">⌖</span> @ParqueSeleccionado.Nombre</div>
+                        <div class="map-node-grid">
+                            @foreach (var nodo in nodos)
+                            {
+                                var panelesNodo = PanelesDelNodo(nodo.Id);
+                                <article class="map-node @(nodoSeleccionadoId == nodo.Id ? "is-selected" : string.Empty)">
+                                    <button class="map-node-heading"
+                                            type="button"
+                                            aria-pressed="@(nodoSeleccionadoId == nodo.Id)"
+                                            @onclick="() => SeleccionarNodo(nodo.Id)">
+                                        <span class="map-node-icon" aria-hidden="true">
+                                            <svg viewBox="0 0 24 24" fill="none">
+                                                <path d="m3 9 9-5 9 5v10H3V9Z" stroke="currentColor" stroke-width="1.7" />
+                                                <path d="m3 9 9 5 9-5M12 14v5M7 11v4m10-4v4" stroke="currentColor" stroke-width="1.5" />
+                                            </svg>
+                                        </span>
+                                        <span class="map-node-copy">
+                                            <strong>@nodo.Nombre</strong>
+                                            <small>@nodo.UbicacionDentroParque</small>
+                                        </span>
+                                        <span class="map-node-count">@panelesNodo.Count <span>paneles</span></span>
+                                    </button>
+                                    @if (panelesNodo.Count == 0)
+                                    {
+                                        <p class="map-no-panels">Sin paneles registrados</p>
+                                    }
+                                    else
+                                    {
+                                        <div class="map-panel-grid" aria-label="Paneles del nodo @nodo.Nombre">
+                                            @foreach (var panel in panelesNodo)
+                                            {
+                                                <button class="map-panel @ClaseEstado(panel.Estado) @(nuevaTarea.PanelId == panel.Id ? "is-selected" : string.Empty)"
+                                                        type="button"
+                                                        title="Panel #@panel.Id · @NombreEstado(panel.Estado)"
+                                                        aria-label="Seleccionar panel @panel.Id, estado @NombreEstado(panel.Estado)"
+                                                        aria-pressed="@(nuevaTarea.PanelId == panel.Id)"
+                                                        @onclick="() => SeleccionarPanel(nodo.Id, panel.Id)">
+                                                    <span aria-hidden="true">▦</span>
+                                                    <small>#@panel.Id</small>
+                                                </button>
+                                            }
+                                        </div>
+                                    }
+                                </article>
+                            }
+                        </div>
+                        <div class="map-legend" aria-label="Leyenda del estado de los paneles">
+                            <span><i class="legend-dot status-good"></i>Bueno</span>
+                            <span><i class="legend-dot status-watch"></i>Intermedio</span>
+                            <span><i class="legend-dot status-alert"></i>Rotura</span>
+                        </div>
+                    </div>
+                }
+            </section>
+
+            <div class="tasks-work-grid">
+                <section class="tasks-card create-task-card" aria-labelledby="crear-tarea-title">
+                    <div class="tasks-section-heading">
+                        <div>
+                            <p class="tasks-eyebrow">NUEVA ORDEN</p>
+                            <h2 id="crear-tarea-title">Crear tarea manual</h2>
+                        </div>
+                        <span class="section-heading-icon" aria-hidden="true">＋</span>
+                    </div>
+                    @if (cargandoNodos)
+                    {
+                        <p class="form-hint">Esperando los nodos del parque...</p>
+                    }
+                    else if (nodos.Count == 0)
+                    {
+                        <p class="form-hint">Registrá un nodo en este parque antes de crear una tarea.</p>
+                    }
+                    else if (PanelesDelParque.Count == 0)
+                    {
+                        <p class="form-hint">Este parque todavía no tiene paneles registrados.</p>
+                    }
+                    else
+                    {
+                        <EditForm Model="@nuevaTarea" OnValidSubmit="CrearAsync">
+                            <DataAnnotationsValidator />
+                            <ValidationSummary />
+                            <div class="task-field">
+                                <label for="tarea-nodo">Nodo</label>
+                                <InputSelect id="tarea-nodo"
+                                             class="form-select"
+                                             @bind-Value="nodoSeleccionadoId"
+                                             @bind-Value:after="AlCambiarNodo">
+                                    <option value="">Elegí un nodo...</option>
+                                    @foreach (var nodo in nodos)
+                                    {
+                                        <option value="@nodo.Id">@nodo.Nombre · @nodo.UbicacionDentroParque</option>
+                                    }
+                                </InputSelect>
+                            </div>
+                            <div class="task-field">
+                                <label for="tarea-panel">Panel</label>
+                                <InputSelect id="tarea-panel"
+                                             class="form-select"
+                                             @bind-Value="nuevaTarea.PanelId"
+                                             disabled="@(nodoSeleccionadoId is null)">
+                                    <option value="0">Elegí un panel...</option>
+                                    @foreach (var panel in PanelesDelNodoSeleccionado)
+                                    {
+                                        <option value="@panel.Id">Panel #@panel.Id · @NombreEstado(panel.Estado)</option>
+                                    }
+                                </InputSelect>
+                            </div>
+                            <div class="task-field">
+                                <label for="tarea-tipo">Tipo de mantenimiento</label>
+                                <InputSelect id="tarea-tipo" class="form-select" @bind-Value="nuevaTarea.TipoTarea">
+                                    @foreach (var tipo in Enum.GetValues<TipoMantenimiento>())
+                                    {
+                                        <option value="@tipo">@NombreTipo(tipo)</option>
+                                    }
+                                </InputSelect>
+                            </div>
+                            <div class="task-field">
+                                <label for="tarea-observaciones">Detalle <span>(opcional)</span></label>
+                                <InputTextArea id="tarea-observaciones"
+                                               class="form-control"
+                                               placeholder="Describí brevemente el trabajo a realizar..."
+                                               @bind-Value="nuevaTarea.Observaciones" />
+                            </div>
+                            <button class="tasks-primary-button" type="submit"
+                                    disabled="@(enviando || nodoSeleccionadoId is null || nuevaTarea.PanelId <= 0)">
+                                <span aria-hidden="true">＋</span> @(enviando ? "Creando tarea..." : "Crear tarea")
+                            </button>
+                        </EditForm>
+                    }
+                    <div class="automation-note">
+                        <span aria-hidden="true">✦</span>
+                        <p>Las tareas de limpieza y reparación también se crean automáticamente cuando un panel pasa a estado Intermedio o Rotura.</p>
+                    </div>
+                </section>
+
+                <section class="tasks-card task-list-card" aria-labelledby="lista-tareas-title">
+                    <div class="tasks-section-heading">
+                        <div>
+                            <p class="tasks-eyebrow">SEGUIMIENTO</p>
+                            <h2 id="lista-tareas-title">Tareas del parque</h2>
+                        </div>
+                        <span class="task-count-badge">@TareasDelParque.Count</span>
+                    </div>
+                    @if (TareasDelParque.Count == 0)
+                    {
+                        <div class="task-list-empty">
+                            <span aria-hidden="true">✓</span>
+                            <strong>Todo despejado</strong>
+                            <p>No hay tareas de mantenimiento para este parque.</p>
+                        </div>
+                    }
+                    else
+                    {
+                        <div class="task-list">
+                            @foreach (var tarea in TareasDelParque.OrderBy(tarea => tarea.Estado).ThenByDescending(tarea => tarea.FechaCreada))
+                            {
+                                var panel = paneles.FirstOrDefault(item => item.Id == tarea.PanelId);
+                                var nodo = panel is null ? null : nodos.FirstOrDefault(item => item.Id == panel.NodoId);
+                                <article class="task-item">
+                                    <div class="task-type-icon @(tarea.TipoTarea == TipoMantenimiento.Reparacion ? "repair-icon" : "clean-icon")" aria-hidden="true">
+                                        @(tarea.TipoTarea == TipoMantenimiento.Reparacion ? "⚒" : "✦")
+                                    </div>
+                                    <div class="task-item-main">
+                                        <div class="task-item-title-row">
+                                            <strong>@NombreTipo(tarea.TipoTarea)</strong>
+                                            <span class="task-status @(tarea.Estado == EstadoTarea.Completada ? "completed-status" : "pending-status")">
+                                                @(tarea.Estado == EstadoTarea.Completada ? "Completada" : "Pendiente")
+                                            </span>
+                                        </div>
+                                        <span class="task-location">
+                                            Panel #@tarea.PanelId
+                                            @if (nodo is not null)
+                                            {
+                                                <span>· @nodo.Nombre</span>
+                                            }
+                                        </span>
+                                        @if (!string.IsNullOrWhiteSpace(tarea.Observaciones))
+                                        {
+                                            <p class="task-observations">@tarea.Observaciones</p>
+                                        }
+                                        <small class="task-date">
+                                            @(tarea.Estado == EstadoTarea.Completada && tarea.FechaFinalizado.HasValue
+                                                ? $"Completada {tarea.FechaFinalizado.Value.ToLocalTime():g}"
+                                                : $"Creada {tarea.FechaCreada.ToLocalTime():g}")
+                                        </small>
+                                    </div>
+                                    @if (tarea.Estado != EstadoTarea.Completada)
+                                    {
+                                        <button class="task-complete-button" type="button"
+                                                aria-label="Completar tarea @tarea.Id"
+                                                @onclick="() => IniciarFinalizacion(tarea.Id)">
+                                            Completar
+                                        </button>
+                                    }
+                                </article>
+                            }
+                        </div>
+                    }
+                </section>
+            </div>
+        }
+        else
+        {
+            <section class="tasks-card tasks-empty park-prompt">
+                <span class="tasks-empty-icon" aria-hidden="true">⌖</span>
+                <h2>Tu parque, de un vistazo</h2>
+                <p>Seleccioná un parque arriba para explorar sus nodos, revisar los paneles y ver las tareas de mantenimiento.</p>
+            </section>
+        }
+    }
+</main>
+
+@if (tareaACompletar is not null)
+{
+    <div class="task-modal-backdrop" role="presentation" @onclick="CancelarFinalizacion">
+        <section class="task-modal" role="dialog" aria-modal="true" aria-labelledby="completar-tarea-title"
+                 @onclick:stopPropagation="true">
+            <button class="task-modal-close" type="button" aria-label="Cerrar" @onclick="CancelarFinalizacion">×</button>
+            <p class="tasks-eyebrow">CIERRE DE TAREA</p>
+            <h2 id="completar-tarea-title">Completar tarea #@tareaACompletar</h2>
+            <p class="modal-description">Registrá qué trabajo se realizó para dejar actualizado el historial.</p>
+            @if (!string.IsNullOrWhiteSpace(mensajeError))
+            {
+                <div class="alert alert-danger" role="alert">@mensajeError</div>
+            }
+            <EditForm Model="@completarTarea" OnValidSubmit="CompletarAsync">
+                <DataAnnotationsValidator />
+                <ValidationSummary />
+                <div class="task-field">
+                    <label for="observaciones-resolucion">Trabajo realizado <span>(opcional)</span></label>
+                    <InputTextArea id="observaciones-resolucion" class="form-control"
+                                   placeholder="Contá brevemente qué se hizo..."
+                                   @bind-Value="completarTarea.Observaciones" />
+                </div>
+                <div class="modal-actions">
+                    <button class="tasks-secondary-button" type="button" @onclick="CancelarFinalizacion">Cancelar</button>
+                    <button class="tasks-primary-button" type="submit" disabled="@enviando">
+                        @(enviando ? "Guardando..." : "Confirmar finalización")
+                    </button>
+                </div>
+            </EditForm>
+        </section>
+    </div>
+}
+
+@code {
+    private IReadOnlyList<ParqueDto> parques = [];
+    private IReadOnlyList<NodoDto> nodos = [];
+    private IReadOnlyList<PanelDto> paneles = [];
+    private IReadOnlyList<TareaDto> tareas = [];
+    private CrearTareaDto nuevaTarea = new();
+    private CompletarTareaDto completarTarea = new();
+    private int? parqueSeleccionadoId;
+    private int? nodoSeleccionadoId;
+    private int? tareaACompletar;
+    private bool puedeConsultar;
+    private bool cargando = true;
+    private bool cargandoNodos;
+    private bool enviando;
+    private string mensajeError = string.Empty;
+    private string mensajeExito = string.Empty;
+
+    private ParqueDto? ParqueSeleccionado =>
+        parques.FirstOrDefault(parque => parque.Id == parqueSeleccionadoId);
+
+    private IReadOnlyList<PanelDto> PanelesDelParque
+    {
+        get
+        {
+            var idsNodos = nodos.Select(nodo => nodo.Id).ToHashSet();
+            return paneles.Where(panel => idsNodos.Contains(panel.NodoId)).ToArray();
+        }
+    }
+
+    private IReadOnlyList<PanelDto> PanelesDelNodoSeleccionado =>
+        PanelesDelParque
+            .Where(panel => panel.NodoId == nodoSeleccionadoId)
+            .OrderBy(panel => panel.Id)
+            .ToArray();
+
+    private IReadOnlyList<PanelDto> PanelesConProblemas =>
+        PanelesDelParque
+            .Where(panel => panel.Estado is EstadoPanel.Intermedio or EstadoPanel.Rotura)
+            .ToArray();
+
+    private IReadOnlyList<TareaDto> TareasDelParque
+    {
+        get
+        {
+            var idsPaneles = PanelesDelParque.Select(panel => panel.Id).ToHashSet();
+            return tareas.Where(tarea => idsPaneles.Contains(tarea.PanelId)).ToArray();
+        }
+    }
+
+    protected override Task OnInitializedAsync() => CargarAsync();
+
+    private async Task CargarAsync()
+    {
+        cargando = true;
+        mensajeError = string.Empty;
+        try
+        {
+            parques = await ServicioParques.ObtenerTodosAsync();
+            paneles = await ServicioPaneles.ObtenerTodosAsync();
+            tareas = await ServicioTareas.ObtenerTodasAsync();
+            puedeConsultar = true;
+        }
+        catch (AccesoNoAutorizadoException)
+        {
+            puedeConsultar = false;
+        }
+        catch (ParquesPersistenciaException exception)
+        {
+            Logger.LogError(exception, "No se pudo cargar la lista de parques para mantenimiento.");
+            mensajeError = "No se pudieron cargar los parques. Intentá nuevamente.";
+        }
+        catch (PanelesPersistenciaException exception)
+        {
+            Logger.LogError(exception, "No se pudieron cargar los paneles para mantenimiento.");
+            mensajeError = "No se pudieron cargar los paneles. Intentá nuevamente.";
+        }
+        catch (TareasPersistenciaException exception)
+        {
+            Logger.LogError(exception, "No se pudo cargar la lista de tareas.");
+            mensajeError = "No se pudieron cargar las tareas. Intentá nuevamente.";
+        }
+        finally
+        {
+            cargando = false;
+        }
+    }
+
+    private async Task AlCambiarParqueAsync()
+    {
+        nodos = [];
+        nodoSeleccionadoId = null;
+        nuevaTarea.PanelId = 0;
+        mensajeError = string.Empty;
+        mensajeExito = string.Empty;
+
+        if (parqueSeleccionadoId is not int parqueId)
+        {
+            return;
+        }
+
+        cargandoNodos = true;
+        try
+        {
+            nodos = await ServicioNodos.ObtenerPorParqueAsync(parqueId);
+        }
+        catch (AccesoNoAutorizadoException)
+        {
+            puedeConsultar = false;
+        }
+        catch (NodosPersistenciaException exception)
+        {
+            Logger.LogError(exception, "No se pudieron cargar los nodos del parque {ParqueId}.", parqueId);
+            mensajeError = "No se pudieron cargar los nodos de este parque. Intentá nuevamente.";
+        }
+        finally
+        {
+            cargandoNodos = false;
+        }
+    }
+
+    private void SeleccionarNodo(int nodoId)
+    {
+        nodoSeleccionadoId = nodoId;
+        nuevaTarea.PanelId = PanelesDelNodoSeleccionado.FirstOrDefault()?.Id ?? 0;
+    }
+
+    private void AlCambiarNodo()
+    {
+        nuevaTarea.PanelId = PanelesDelNodoSeleccionado.FirstOrDefault()?.Id ?? 0;
+    }
+
+    private void SeleccionarPanel(int nodoId, int panelId)
+    {
+        nodoSeleccionadoId = nodoId;
+        nuevaTarea.PanelId = panelId;
+    }
+
+    private async Task CrearAsync()
+    {
+        enviando = true;
+        mensajeError = string.Empty;
+        mensajeExito = string.Empty;
+        try
+        {
+            var tarea = await ServicioTareas.CrearAsync(nuevaTarea);
+            mensajeExito = $"Se creó una tarea de {NombreTipo(tarea.TipoTarea)} para el panel #{tarea.PanelId}.";
+            await CargarAsync();
+        }
+        catch (ArgumentException exception)
+        {
+            mensajeError = exception.Message;
+        }
+        catch (AccesoNoAutorizadoException exception)
+        {
+            mensajeError = exception.Message;
+        }
+        catch (TareaNoEncontradaException exception)
+        {
+            mensajeError = exception.Message;
+        }
+        catch (TareasPersistenciaException exception)
+        {
+            Logger.LogError(exception, "No se pudo crear una tarea para el panel {PanelId}.", nuevaTarea.PanelId);
+            mensajeError = "No se pudo crear la tarea. Intentá nuevamente.";
+        }
+        finally
+        {
+            enviando = false;
+        }
+    }
+
+    private void IniciarFinalizacion(int id)
+    {
+        tareaACompletar = id;
+        completarTarea = new CompletarTareaDto();
+        mensajeError = string.Empty;
+    }
+
+    private async Task CompletarAsync()
+    {
+        if (tareaACompletar is not int id)
+        {
+            return;
+        }
+
+        enviando = true;
+        mensajeError = string.Empty;
+        mensajeExito = string.Empty;
+        try
+        {
+            await ServicioTareas.CompletarAsync(id, completarTarea);
+            mensajeExito = $"La tarea #{id} quedó completada.";
+            CancelarFinalizacion();
+            await CargarAsync();
+        }
+        catch (ArgumentException exception)
+        {
+            mensajeError = exception.Message;
+        }
+        catch (AccesoNoAutorizadoException exception)
+        {
+            mensajeError = exception.Message;
+        }
+        catch (TareaNoEncontradaException exception)
+        {
+            mensajeError = exception.Message;
+        }
+        catch (TareaNoDisponibleException exception)
+        {
+            mensajeError = exception.Message;
+        }
+        catch (TareasPersistenciaException exception)
+        {
+            Logger.LogError(exception, "No se pudo completar la tarea {TareaId}.", id);
+            mensajeError = "No se pudo completar la tarea. Intentá nuevamente.";
+        }
+        finally
+        {
+            enviando = false;
+        }
+    }
+
+    private void CancelarFinalizacion()
+    {
+        tareaACompletar = null;
+        completarTarea = new CompletarTareaDto();
+    }
+
+    private IReadOnlyList<PanelDto> PanelesDelNodo(int nodoId) =>
+        PanelesDelParque
+            .Where(panel => panel.NodoId == nodoId)
+            .OrderBy(panel => panel.Id)
+            .ToArray();
+
+    private static string NombreTipo(TipoMantenimiento tipo) =>
+        tipo == TipoMantenimiento.Limpieza ? "Limpieza" : "Reparación";
+
+    private static string NombreEstado(EstadoPanel estado) =>
+        estado switch
+        {
+            EstadoPanel.Bueno => "Bueno",
+            EstadoPanel.Intermedio => "Intermedio",
+            EstadoPanel.Rotura => "Rotura",
+            _ => estado.ToString()
+        };
+
+    private static string ClaseEstado(EstadoPanel estado) =>
+        estado switch
+        {
+            EstadoPanel.Intermedio => "status-watch",
+            EstadoPanel.Rotura => "status-alert",
+            _ => "status-good"
+        };
+}

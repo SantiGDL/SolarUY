@@ -6,6 +6,7 @@
 @using SolarUy.Backend.Modulos.Parques.Aplicacion.DTOs
 @using SolarUy.Backend.Modulos.Parques.Aplicacion.Excepciones
 @using SolarUy.Backend.Modulos.Parques.Dominio.Enums
+@using SolarUy.Backend.Modulos.Tareas.Aplicacion.Excepciones
 @inject IParquesService ServicioParques
 @inject IPanelesService ServicioPaneles
 @inject INodosService ServicioNodos
@@ -304,6 +305,12 @@
         {
             Logger.LogError(exception, "No se pudo guardar el panel.");
             mensajeError = "No se pudo guardar el panel. Intentá nuevamente.";
+        }
+        catch (TareaAutomaticaException exception)
+        {
+            Logger.LogError(exception, "El panel se guardó, pero falló la tarea automática.");
+            mensajeError = exception.Message;
+            await CargarAsync();
         }
         finally
         {
