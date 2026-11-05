@@ -50,6 +50,7 @@ public sealed class ParquesDbContext(DbContextOptions<ParquesDbContext> options)
         panel.Property(item => item.PotenciaActual).IsRequired();
         panel.Property(item => item.Orientacion).HasMaxLength(50).IsRequired();
         panel.Property(item => item.NodoId).IsRequired();
+        panel.Property(item => item.Deshabilitado).HasDefaultValue(false).IsRequired();
         panel.HasOne<Nodo>()
             .WithMany()
             .HasForeignKey(item => item.NodoId)

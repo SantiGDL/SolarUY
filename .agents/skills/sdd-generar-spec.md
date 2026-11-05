@@ -17,10 +17,7 @@ Cuando el usuario invoque esta skill, debes ejecutar el siguiente flujo:
     - `3_convenciones_nomenclatura.md`
     - `4_modelado_dominio.md`
     - `5_capa_presentacion.md`
-    - `6_documentacion.md`
-    - `7_flujo_trabajo_ia.md`
-
-   No incluyas por ahora `6_documentacion.md`.
+    - `6_flujo_trabajo_ia.md`
 
 3. **Generar Diseño:** A partir de los requerimientos, redacta un documento de especificaciones técnicas llamado `specs.md` en la misma carpeta que `requirements.md`.
 

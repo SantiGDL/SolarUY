@@ -1,0 +1,20 @@
+<svg viewBox="0 0 64 64" fill="none" aria-hidden="true" focusable="false" xmlns="http://www.w3.org/2000/svg">
+    @switch (Nombre)
+    {
+        case "rayo":
+            <path d="M44 3 9 35h23L19 61l37-36H34L44 3Z" stroke="currentColor" stroke-width="3.2" stroke-linecap="round" stroke-linejoin="round" />
+            break;
+        case "cancelar":
+            <circle cx="32" cy="32" r="30" fill="currentColor" />
+            <path d="m23 23 18 18m0-18L23 41" stroke="white" stroke-width="6" stroke-linecap="round" />
+            break;
+        default:
+            <circle cx="32" cy="32" r="31" fill="currentColor" opacity=".12" />
+            <circle cx="32" cy="32" r="19" fill="currentColor" />
+            break;
+    }
+</svg>
+
+@code {
+    [Parameter] public string Nombre { get; set; } = "estado";
+}

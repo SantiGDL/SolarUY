@@ -1,0 +1,4 @@
+.grafica-mediciones{height:245px;width:100%;min-width:0;--rz-chart-axis-label-color:#4269ba;--rz-chart-axis-label-font-size:13px;--rz-chart-axis-stroke:#bfd0ed;font-family:inherit}
+.grafica-vacia{height:100%;display:grid;place-items:center;background:linear-gradient(180deg,#fff,#fbfdff);border:1px solid #e8eef8;color:#5872a6;text-align:center;padding:20px}
+.grafica-mediciones ::deep .rz-chart{font-family:inherit}
+@media(max-width:600px){.grafica-mediciones{height:220px}}
