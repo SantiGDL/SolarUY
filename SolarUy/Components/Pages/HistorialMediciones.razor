@@ -1,0 +1,91 @@
+@page "/admin/historial"
+@rendermode InteractiveServer
+@layout MainLayout
+@attribute [Microsoft.AspNetCore.Authorization.Authorize(Roles = "ADMIN")]
+@using SolarUy.Backend.Modulos.Mediciones.Aplicacion.DTOs
+@using SolarUy.Backend.Modulos.Mediciones.Dominio.Historial
+
+<PageTitle>SolarUy | Historial</PageTitle>
+<section class="historial-heading">
+    <div><p class="eyebrow">INFORMACIÓN HISTÓRICA</p><h1>Historial de mediciones</h1>
+        <p>Consultá la potencia registrada de tus parques y descargá los resultados.</p></div>
+    <span class="historial-badge">Datos del simulador · W</span>
+</section>
+
+@if (_error is not null)
+{
+    <div class="alert alert-danger" role="alert">@_error</div>
+}
+<section class="historial-card" aria-labelledby="consulta-title">
+    <div class="historial-toolbar"><h2 id="consulta-title">Preparar consulta</h2>
+        <button class="btn btn-outline-secondary btn-sm" disabled="@Ocupado" @onclick="CargarAsync">Actualizar catálogo</button></div>
+    <form @onsubmit="ConsultarAsync" @onsubmit:preventDefault>
+        <fieldset disabled="@Ocupado">
+            <div class="historial-filtros">
+                <label>Parque<select class="form-select" @bind="_parque" @bind:after="CambiarParque">
+                    @foreach (var parque in _opciones.DistinctBy(o => o.ParqueId))
+                    { <option value="@parque.ParqueId">@parque.Parque (#@parque.ParqueId)</option> }
+                </select></label>
+                <label>Nodo<select class="form-select" @bind="_nodo" @bind:after="CambiarNodo">
+                    <option value="0">Todos los nodos</option>
+                    @foreach (var nodo in _opciones.Where(o => o.ParqueId == _parque).DistinctBy(o => o.NodoId))
+                    { <option value="@nodo.NodoId">@nodo.Nodo (#@nodo.NodoId)</option> }
+                </select></label>
+                <label>Panel<select class="form-select" @bind="_panel" disabled="@(_nodo == 0)">
+                    <option value="0">Todos los paneles</option>
+                    @foreach (var panel in _opciones.Where(o => o.ParqueId == _parque && o.NodoId == _nodo))
+                    { <option value="@panel.PanelId">Panel #@panel.PanelId</option> }
+                </select></label>
+                <label>Período<select class="form-select" @bind="_periodo">
+                    <option value="@PeriodoHistorial.Todos">Todos los datos</option>
+                    <option value="@PeriodoHistorial.Ultimas24Horas">Últimas 24 horas</option>
+                    <option value="@PeriodoHistorial.Ultimos30Dias">Últimos 30 días</option>
+                    <option value="@PeriodoHistorial.Ultimos365Dias">Últimos 365 días</option>
+                </select></label>
+                <label>Mostrar<select class="form-select" @bind="_modo">
+                    <option value="@ModoHistorial.Diario">Promedios diarios por panel</option>
+                    <option value="@ModoHistorial.Promedio">Promedio del período por panel</option>
+                    <option value="@ModoHistorial.Crudos">Datos crudos</option>
+                </select></label>
+            </div>
+            <p class="historial-help">Día de Uruguay (UTC-03:00). Los promedios incluyen solo las muestras registradas de cada panel.</p>
+            <button class="btn btn-success" type="submit" disabled="@(_opciones.Count == 0)">
+                @if (_consultando) { <span class="spinner-border spinner-border-sm" aria-hidden="true"></span> }
+                @(_consultando ? "Consultando…" : "Consultar historial")
+            </button>
+        </fieldset>
+    </form>
+    @if (_cargando) { <p role="status">Cargando catálogo…</p> }
+    else if (_opciones.Count == 0) { <p role="status">No hay paneles ni mediciones disponibles para consultar.</p> }
+</section>
+
+@if (_resultado is not null)
+{
+    <section class="historial-card" aria-labelledby="resultado-title" aria-busy="@_consultando.ToString().ToLowerInvariant()">
+        <div class="historial-toolbar"><div><p class="eyebrow">RESULTADO DE LA CONSULTA</p><h2 id="resultado-title">@_resultado.Modo</h2></div>
+            <button class="btn btn-outline-success" disabled="@Ocupado" @onclick="ExportarAsync">@(_exportando ? "Preparando PDF…" : "Descargar PDF")</button></div>
+        <p class="historial-seleccion">@_resultado.Seleccion</p>
+        <p>@_resultado.Periodo · @_resultado.Filas.Count resultados</p>
+        <p class="historial-help">Desde @(_resultado.Consulta.Desde.HasValue ? ResultadoHistorialDto.FechaLocal(_resultado.Consulta.Desde.Value) : "el primer registro disponible")
+            hasta @ResultadoHistorialDto.FechaLocal(_resultado.Consulta.Hasta) · Uruguay (UTC-03:00)</p>
+        <div class="historial-aviso">@ResultadoHistorialDto.Aviso</div>
+        @if (_resultado.Filas.Count == 0)
+        { <p class="historial-vacio" role="status">No hay mediciones para esta selección y período.</p> }
+        else
+        {
+            <div class="table-responsive">
+                <table class="table align-middle"><caption>Potencia en W. Se muestran @FilasPagina.Count() de @_resultado.Filas.Count resultados. El PDF incluye todos.</caption>
+                    <thead><tr><th>Fecha / día</th><th>Parque</th><th>Nodo</th><th>Panel</th><th>Potencia (W)</th><th>Muestras</th><th>@(_resultado.Consulta.Modo == ModoHistorial.Crudos ? "Registro" : "Última lectura")</th></tr></thead>
+                    <tbody>@foreach (var fila in FilasPagina)
+                    { <tr><td>@(fila.Dia?.ToString("dd/MM/yyyy") ?? ResultadoHistorialDto.FechaLocal(fila.PrimeraFecha))</td><td>#@fila.ParqueId</td><td>#@fila.NodoId</td><td>#@fila.PanelId</td><td class="historial-valor">@fila.Valor.ToString("N2", System.Globalization.CultureInfo.GetCultureInfo("es-UY"))</td><td>@fila.Cantidad</td><td>@(_resultado.Consulta.Modo == ModoHistorial.Crudos ? $"#{fila.Id}" : ResultadoHistorialDto.FechaLocal(fila.UltimaFecha))</td></tr> }
+                    </tbody>
+                </table>
+            </div>
+            <nav class="historial-paginacion" aria-label="Páginas de resultados">
+                <button class="btn btn-outline-secondary btn-sm" disabled="@(_pagina == 0 || Ocupado)" @onclick="Anterior">Anterior</button>
+                <span>Página @(_pagina + 1) de @Paginas</span>
+                <button class="btn btn-outline-secondary btn-sm" disabled="@(_pagina + 1 >= Paginas || Ocupado)" @onclick="Siguiente">Siguiente</button>
+            </nav>
+        }
+    </section>
+}

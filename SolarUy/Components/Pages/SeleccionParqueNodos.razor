@@ -1,0 +1,74 @@
+@page "/admin/nodos"
+@rendermode InteractiveServer
+@layout MainLayout
+@attribute [Microsoft.AspNetCore.Authorization.Authorize]
+@using SolarUy.Backend.Modulos.Parques.Aplicacion.Contratos
+@using SolarUy.Backend.Modulos.Parques.Aplicacion.DTOs
+@using SolarUy.Backend.Modulos.Parques.Aplicacion.Excepciones
+@inject IParquesService ServicioParques
+@inject NavigationManager Navegacion
+@inject ILogger<SeleccionParqueNodos> Logger
+
+<PageTitle>SolarUy | Nodos</PageTitle>
+
+<section class="admin-card" aria-labelledby="seleccion-nodos-title">
+    <p class="eyebrow">GESTIÓN DE NODOS</p>
+    <h1 id="seleccion-nodos-title">Nodos por parque</h1>
+    <p>Elegí un parque para consultar sus nodos y registrar nuevos.</p>
+
+    @if (cargando)
+    {
+        <p role="status">Cargando parques…</p>
+    }
+    else if (error is not null)
+    {
+        <div class="alert alert-danger" role="alert">@error</div>
+        <button class="btn btn-outline-primary" @onclick="CargarAsync">Reintentar</button>
+    }
+    else if (parques.Count == 0)
+    {
+        <p>Todavía no hay parques registrados.</p>
+        <a class="btn btn-primary" href="/admin/parques">Ir a parques</a>
+    }
+    else
+    {
+        <div class="mb-3">
+            <label class="form-label" for="parque-nodos">Parque solar</label>
+            <select id="parque-nodos" class="form-select" @bind="parqueId">
+                @foreach (var parque in parques)
+                {
+                    <option value="@parque.Id">@parque.Nombre</option>
+                }
+            </select>
+        </div>
+        <p class="text-break"><span class="text-muted">Dirección del listado:</span> @Navegacion.ToAbsoluteUri(RutaNodos)</p>
+        <a class="btn btn-primary" href="@RutaNodos">Ver nodos</a>
+    }
+</section>
+
+@code {
+    private IReadOnlyList<ParqueDto> parques = [];
+    private int parqueId;
+    private bool cargando = true;
+    private string? error;
+    private string RutaNodos => $"/admin/parques/{parqueId}/nodos";
+
+    protected override Task OnInitializedAsync() => CargarAsync();
+
+    private async Task CargarAsync()
+    {
+        cargando = true;
+        error = null;
+        try
+        {
+            parques = await ServicioParques.ObtenerTodosAsync();
+            parqueId = parques.FirstOrDefault()?.Id ?? 0;
+        }
+        catch (ParquesPersistenciaException ex)
+        {
+            Logger.LogError(ex, "No se pudieron cargar los parques para consultar nodos.");
+            error = "No se pudieron cargar los parques. Intentá nuevamente.";
+        }
+        finally { cargando = false; }
+    }
+}

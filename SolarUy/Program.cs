@@ -80,6 +80,12 @@ builder.Services.AddDbContextFactory<MedicionesDbContext>(options =>
 builder.Services.AddScoped<IMedicionRepository, MedicionRepository>();
 builder.Services.AddScoped<ICatalogoProduccion, CatalogoProduccionService>();
 builder.Services.AddScoped<MedicionesService>();
+builder.Services.AddScoped<ICatalogoHistorial, CatalogoHistorialService>();
+builder.Services.AddScoped<SolarUy.Backend.Modulos.Mediciones.Aplicacion.Contratos.IAccesoHistorial, AccesoHistorialActual>();
+builder.Services.AddScoped<HistorialMedicionesService>();
+builder.Services.AddScoped<SolarUy.Backend.Modulos.Mediciones.Aplicacion.Contratos.IExportadorHistorialPdf,
+    SolarUy.Backend.Modulos.Mediciones.Infraestructura.Exportacion.ExportadorHistorialPdf>();
+PdfSharp.Fonts.GlobalFontSettings.FontResolver ??= new SolarUy.Backend.Modulos.Mediciones.Infraestructura.Exportacion.FuentesHistorial();
 builder.Services.AddSingleton<SolarUy.Backend.Modulos.Mediciones.Aplicacion.Contratos.ISesionesProduccion,
     SolarUy.Backend.Modulos.Mediciones.Infraestructura.Sesiones.SesionesProduccion>();
 builder.Services.AddScoped<SolarUy.Backend.Modulos.Mediciones.Aplicacion.Contratos.IControlMotor,
