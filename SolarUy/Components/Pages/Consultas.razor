@@ -1,0 +1,48 @@
+@page "/admin/consultas"
+@rendermode InteractiveServer
+@layout MainLayout
+@attribute [Microsoft.AspNetCore.Authorization.Authorize(Roles = "ADMIN")]
+@using SolarUy.Backend.Modulos.Consultas.Aplicacion.Implementaciones
+
+<PageTitle>SolarUy | Consultas</PageTitle>
+
+<section class="consultas-header">
+    <div>
+        <p class="eyebrow">CONSULTAS EN LENGUAJE NATURAL</p>
+        <h1>Consulta histórica</h1>
+        <p>Preguntá por la generación, los nodos o los paneles y responderé con datos del historial.</p>
+    </div>
+    <span class="consultas-badge">Solo lectura · ADMIN</span>
+</section>
+
+@if (_error is not null)
+{
+    <div class="alert alert-danger" role="alert">@_error</div>
+}
+
+<div class="consultas-shell">
+    <div class="consultas-panel" aria-live="polite">
+        @foreach (var mensaje in _mensajes)
+        {
+            <div class="consultas-bubble @(mensaje.Rol == "usuario" ? "consultas-bubble-user" : "consultas-bubble-assistant")">
+                <span class="consultas-role">@(mensaje.Rol == "usuario" ? "Tú" : "SolarUy")</span>
+                <p>@mensaje.Texto</p>
+            </div>
+        }
+    </div>
+
+    <form class="consultas-form" @onsubmit="EnviarAsync" @onsubmit:preventDefault>
+        <label class="visually-hidden" for="pregunta-consulta">Pregunta</label>
+        <textarea id="pregunta-consulta" rows="4" maxlength="@ConsultaNaturalService.MaximoCaracteres" @bind="_pregunta" aria-label="Pregunta sobre el historial"></textarea>
+        <div class="consultas-actions">
+            <span>@_pregunta.Length / @ConsultaNaturalService.MaximoCaracteres</span>
+            <button class="btn btn-success" type="submit" disabled="@_enviando">
+                @if (_enviando)
+                {
+                    <span class="spinner-border spinner-border-sm" aria-hidden="true"></span>
+                }
+                @(_enviando ? "Consultando…" : "Enviar")
+            </button>
+        </div>
+    </form>
+</div>
