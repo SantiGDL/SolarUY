@@ -1,9 +1,13 @@
+using System.Reflection;
+using System.Text;
 using Microsoft.Extensions.Configuration;
+using PdfSharp.Fonts;
 using SolarUy.Backend.Modulos.Consultas.Aplicacion.Contratos;
 using SolarUy.Backend.Modulos.Consultas.Aplicacion.Implementaciones;
 using SolarUy.Backend.Modulos.Consultas.Infraestructura.IA;
 using SolarUy.Backend.Modulos.Mediciones.Aplicacion.DTOs;
 using SolarUy.Backend.Modulos.Mediciones.Dominio.Historial;
+using SolarUy.Backend.Modulos.Mediciones.Infraestructura.Exportacion;
 using SolarUy.Backend.Modulos.Parques.Interfaz.Apis.Local.Contratos;
 using SolarUy.Backend.Modulos.Tareas.Aplicacion.DTOs;
 using SolarUy.Backend.Modulos.Tareas.Dominio.Enums;
@@ -588,6 +592,71 @@ public sealed class ConsultaNaturalServiceTests
             ConsultaNaturalParser.Parsear("creá un parque y cambia el panel 7"));
 
         Assert.Contains("solo consulta", ex.Message, StringComparison.OrdinalIgnoreCase);
+    }
+
+    [Fact]
+    public void ConsultaNaturalService_DetectaPedidoDeDescargaPdf()
+    {
+        Assert.True(ConsultaNaturalService.EsPedidoExportacionPdf("descargá el pdf del parque 2 en las últimas 24 horas"));
+        Assert.True(ConsultaNaturalService.EsPedidoExportacionPdf("quiero exportar el historial a pdf"));
+        Assert.True(ConsultaNaturalService.EsPedidoExportacionPdf("Dame un pdf de la produccion historica del nodo 6"));
+        Assert.False(ConsultaNaturalService.EsPedidoExportacionPdf("¿cómo estuvo la generación del parque 2 en las últimas 24 horas?"));
+    }
+
+    [Fact]
+    public void ParsearPregunta_ResuelveNodoConPdfHistorico()
+    {
+        var opciones = new[]
+        {
+            new OpcionHistorialDto(3, "Par 3", 4, "NOD 0303", 9),
+            new OpcionHistorialDto(3, "Par 3", 5, "NOD 0301", 5),
+            new OpcionHistorialDto(3, "Par 3", 6, "NOD 0302", 7),
+        };
+
+        var solicitud = ConsultaNaturalParser.Parsear("Dame un pdf de la produccion historica del nodo 6", opciones);
+
+        Assert.Equal(3, solicitud.ParqueId);
+        Assert.Equal(6, solicitud.NodoId);
+        Assert.Equal(PeriodoHistorial.Todos, solicitud.Periodo);
+        Assert.Equal(ModoHistorial.Diario, solicitud.Modo);
+    }
+
+    [Fact]
+    public void FuentesHistorial_ConfiguraResolverYResuelveFuentesDelPdf()
+    {
+        FuentesHistorial.Configurar();
+
+        var resolver = Assert.IsType<FuentesHistorial>(GlobalFontSettings.FontResolver);
+        var tipo = resolver.ResolveTypeface("Courier New", false, false);
+        var fuente = resolver.GetFont(tipo.FaceName);
+
+        Assert.NotNull(tipo);
+        Assert.Equal("historial", tipo.FaceName, ignoreCase: true);
+        Assert.NotEmpty(fuente);
+
+        var consulta = new ConsultaHistorial(3, 5, 8, PeriodoHistorial.Todos, ModoHistorial.Diario, new DateTimeOffset(2026, 10, 15, 12, 0, 0, TimeSpan.Zero));
+        var constructor = typeof(ResultadoHistorialDto).GetConstructor(
+            BindingFlags.Instance | BindingFlags.NonPublic,
+            binder: null,
+            new[] { typeof(ConsultaHistorial), typeof(string), typeof(IEnumerable<FilaHistorialDto>) },
+            modifiers: null);
+
+        Assert.NotNull(constructor);
+
+        var resultado = (ResultadoHistorialDto)constructor!.Invoke([
+            consulta,
+            "Parque 3 / Nodo 5 / Panel 8",
+            new[]
+            {
+                new FilaHistorialDto(1, 3, 5, 8, new DateTimeOffset(2026, 10, 10, 8, 0, 0, TimeSpan.Zero), new DateTimeOffset(2026, 10, 10, 8, 15, 0, TimeSpan.Zero), new DateTime(2026, 10, 10), 150.60, 12),
+                new FilaHistorialDto(2, 3, 5, 8, new DateTimeOffset(2026, 10, 11, 8, 0, 0, TimeSpan.Zero), new DateTimeOffset(2026, 10, 11, 8, 20, 0, TimeSpan.Zero), new DateTime(2026, 10, 11), 172.30, 9)
+            }
+        ]);
+
+        var pdf = new ExportadorHistorialPdf().Generar(resultado);
+
+        Assert.NotEmpty(pdf);
+        Assert.Equal("%PDF", Encoding.UTF8.GetString(pdf.Take(4).ToArray()));
     }
 
     [Fact]

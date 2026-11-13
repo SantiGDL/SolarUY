@@ -24,7 +24,8 @@ public static partial class ConsultaNaturalParser
         "crudos", "energia", "muestra", "muestras", "ultimas", "ultimos",
         "dias", "periodo", "hoy", "estado", "orientacion", "orientación",
         "intermedio", "rotura", "bueno", "malo", "mal", "pendiente", "tarea",
-        "tareas", "asignada", "asignadas"
+        "tareas", "asignada", "asignadas", "pdf", "descarga", "descargar",
+        "exportar", "exporta", "archivo", "documento"
     ];
 
     public static ConsultaNaturalRequest Parsear(string pregunta, IReadOnlyList<OpcionHistorialDto>? opciones = null)

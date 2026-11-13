@@ -45,4 +45,11 @@
             </button>
         </div>
     </form>
+
+    @if (_pdfActual is not null && !string.IsNullOrWhiteSpace(_nombrePdf))
+    {
+        <button class="btn btn-outline-success mt-3" type="button" @onclick="DescargarPdfAsync">
+            Descargar PDF
+        </button>
+    }
 </div>

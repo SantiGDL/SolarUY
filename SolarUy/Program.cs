@@ -118,7 +118,7 @@ builder.Services.AddHttpClient<IProveedorConsultaIA, ProveedorConsultaLocal>((_,
 });
 builder.Services.AddScoped<SolarUy.Backend.Modulos.Mediciones.Aplicacion.Contratos.IExportadorHistorialPdf,
     SolarUy.Backend.Modulos.Mediciones.Infraestructura.Exportacion.ExportadorHistorialPdf>();
-PdfSharp.Fonts.GlobalFontSettings.FontResolver ??= new SolarUy.Backend.Modulos.Mediciones.Infraestructura.Exportacion.FuentesHistorial();
+SolarUy.Backend.Modulos.Mediciones.Infraestructura.Exportacion.FuentesHistorial.Configurar();
 builder.Services.AddSingleton<SolarUy.Backend.Modulos.Mediciones.Aplicacion.Contratos.ISesionesProduccion,
     SolarUy.Backend.Modulos.Mediciones.Infraestructura.Sesiones.SesionesProduccion>();
 builder.Services.AddScoped<SolarUy.Backend.Modulos.Mediciones.Aplicacion.Contratos.IControlMotor,

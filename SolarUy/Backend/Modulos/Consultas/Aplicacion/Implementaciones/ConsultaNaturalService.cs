@@ -1,3 +1,4 @@
+using System.Text;
 using SolarUy.Backend.Modulos.Consultas.Aplicacion.Contratos;
 using SolarUy.Backend.Modulos.Consultas.Aplicacion.DTOs;
 using SolarUy.Backend.Modulos.Mediciones.Aplicacion.DTOs;
@@ -35,6 +36,32 @@ public sealed class ConsultaNaturalService(
         {
             var tareas = await tareasService.ObtenerTodasAsync(cancellationToken);
             return new RespuestaConsultaNaturalDto(ResponderTareas(tareas, pregunta), true, tareas.Count > 0);
+        }
+
+        if (EsPedidoExportacionPdf(pregunta))
+        {
+            var solicitudPdf = ConsultaNaturalParser.Parsear(pregunta, opciones);
+            if (!solicitudPdf.ParqueId.HasValue || solicitudPdf.ParqueId <= 0)
+                throw new ArgumentException("Indicá el parque que querés consultar para descargar el PDF del historial.");
+
+            var queryPdf = await historial.ConsultarAsync(
+                solicitudPdf.ParqueId.Value,
+                solicitudPdf.NodoId,
+                solicitudPdf.PanelId,
+                solicitudPdf.Periodo,
+                solicitudPdf.Modo,
+                cancellationToken);
+
+            if (queryPdf.Filas.Count == 0)
+            {
+                var mensajeSinDatos = $"No hay mediciones disponibles para {queryPdf.Seleccion} en el período {queryPdf.Periodo}, así que no puedo generar un PDF con resultados.";
+                return new RespuestaConsultaNaturalDto(mensajeSinDatos, false, false);
+            }
+
+            var pdf = await historial.ExportarAsync(queryPdf);
+            var nombrePdf = $"SolarUy-historial-{queryPdf.Consulta.Hasta:yyyyMMdd-HHmmss}.pdf";
+            var cuerpo = $"Preparé el PDF para {queryPdf.Seleccion} en {queryPdf.Periodo}.\n\n{FormatearResultado(queryPdf, solicitudPdf)}";
+            return new RespuestaConsultaNaturalDto(cuerpo, false, queryPdf.Filas.Count > 0, queryPdf.Filas.Count > 100, Math.Min(queryPdf.Filas.Count, 100), queryPdf.Filas.Count, pdf, nombrePdf);
         }
 
         var solicitud = ConsultaNaturalParser.Parsear(pregunta, opciones);
@@ -80,6 +107,18 @@ public sealed class ConsultaNaturalService(
         return new RespuestaConsultaNaturalDto(respuesta, false, query.Filas.Count > 0, recorte, Math.Min(query.Filas.Count, 100), query.Filas.Count);
     }
 
+    public static bool EsPedidoExportacionPdf(string pregunta)
+    {
+        var texto = NormalizarPregunta(pregunta);
+        return texto.Contains("pdf", StringComparison.Ordinal)
+            || texto.Contains("descarga", StringComparison.Ordinal)
+            || texto.Contains("descargar", StringComparison.Ordinal)
+            || texto.Contains("exporta", StringComparison.Ordinal)
+            || texto.Contains("exportar", StringComparison.Ordinal)
+            || texto.Contains("archivo", StringComparison.Ordinal)
+            || texto.Contains("documento", StringComparison.Ordinal);
+    }
+
     public static bool EsPreguntaTareas(string pregunta)
     {
         var texto = pregunta.ToLowerInvariant();
@@ -87,6 +126,21 @@ public sealed class ConsultaNaturalService(
                texto.Contains("pendientes") || texto.Contains("completada") || texto.Contains("completadas") ||
                texto.Contains("finalizada") || texto.Contains("finalizadas") || texto.Contains("abierta") ||
                texto.Contains("abiertas");
+    }
+
+    private static string NormalizarPregunta(string pregunta)
+    {
+        var normalizado = pregunta.Normalize(System.Text.NormalizationForm.FormD);
+        var builder = new StringBuilder();
+
+        foreach (var caracter in normalizado)
+        {
+            var categoria = System.Globalization.CharUnicodeInfo.GetUnicodeCategory(caracter);
+            if (categoria != System.Globalization.UnicodeCategory.NonSpacingMark)
+                builder.Append(char.ToLowerInvariant(caracter));
+        }
+
+        return builder.ToString();
     }
 
     public static string ResponderTareas(IReadOnlyList<TareaDto> tareas, string pregunta)
