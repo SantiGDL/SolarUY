@@ -1,0 +1,20 @@
+.consultas-header { display:flex; justify-content:space-between; align-items:flex-start; gap:1rem; margin-bottom:1.5rem; }
+.consultas-header h1 { font-size:2rem; margin:0; color:#17354a; }
+.consultas-header p { color:#526886; margin:0.35rem 0 0; }
+.consultas-badge { background:#e8f5ef; color:#19734a; padding:.6rem 1rem; border-radius:2rem; font-size:.85rem; white-space:nowrap; }
+.consultas-shell { background:white; border:1px solid #dfe8ed; border-radius:16px; padding:1.25rem; box-shadow:0 4px 18px #17354a06; }
+.consultas-panel { display:flex; flex-direction:column; gap:.75rem; min-height:220px; max-height:420px; overflow-y:auto; }
+.consultas-bubble { max-width:85%; padding:.9rem 1rem; border-radius:16px; }
+.consultas-bubble-user { align-self:flex-end; background:#eaf3ff; color:#17354a; border-bottom-right-radius:0; }
+.consultas-bubble-assistant { align-self:flex-start; background:#f5f7fb; color:#17354a; border-bottom-left-radius:0; }
+.consultas-role { display:block; font-size:.75rem; font-weight:700; opacity:.75; margin-bottom:.35rem; text-transform:uppercase; }
+.consultas-bubble p { margin:0; white-space:pre-line; }
+.consultas-form { margin-top:1rem; }
+.consultas-form textarea { width:100%; min-height:120px; border:1px solid #cfdde8; border-radius:12px; padding:.85rem 1rem; resize:vertical; }
+.consultas-actions { display:flex; justify-content:space-between; align-items:center; gap:1rem; margin-top:.75rem; }
+.consultas-actions span { color:#526886; font-size:.9rem; }
+@media (max-width:767px) {
+    .consultas-header { flex-direction:column; }
+    .consultas-badge { align-self:flex-start; }
+    .consultas-bubble { max-width:95%; }
+}
