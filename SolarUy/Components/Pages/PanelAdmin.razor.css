@@ -34,6 +34,14 @@ a.quick-card:focus-visible { outline: 3px solid #086aff; outline-offset: 3px; }
 .empty-state img { width: 43px; height: 43px; object-fit: contain; opacity: .8; margin-bottom: 18px; }
 .empty-state h3 { font-size: 1.1rem; font-weight: 650; }
 .empty-state p { font-size: .88rem; color: #526886; line-height: 1.7; margin: 10px 0 0; }
+.assistant .section-heading { justify-content: center; text-align: center; }
+.assistant .empty-state { padding: 20px 12px 0; }
+.assistant .empty-state img { margin-bottom: 12px; }
+.assistant-badge { display: inline-block; margin-top: 14px; padding: 4px 12px; border-radius: 20px; background: #edf3fc; color: #46617f; font-size: .75rem; font-weight: 600; }
+.assistant .assistant-description { margin-top: 6px; font-size: .8rem; }
+.assistant-link { display: inline-block; max-width: 100%; margin-top: 16px; padding: 10px 20px; border: 1px solid #0866f1; border-radius: 8px; background: #0866f1; color: #fff; font-size: .88rem; font-weight: 600; text-decoration: none; }
+.assistant-link:hover { background: #0756cd; border-color: #0756cd; color: #fff; }
+.assistant-link:focus-visible { outline: 3px solid #086aff; outline-offset: 3px; }
 .production select { background: #f8faff; color: #526886; border: 1px solid #dce6f3; border-radius: 8px; font-size: .78rem; padding: 8px; max-width: 100%; }
 .production figure { margin: 20px 0 0; }
 .production figure img { width: 100%; height: auto; display: block; border-radius: 8px; }

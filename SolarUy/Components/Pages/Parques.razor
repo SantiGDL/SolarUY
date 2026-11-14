@@ -7,6 +7,7 @@
 @using SolarUy.Backend.Modulos.Parques.Aplicacion.Excepciones
 @inject IParquesService ServicioParques
 @inject INodosService ServicioNodos
+@inject IPanelesService ServicioPaneles
 @inject ILogger<Parques> Logger
 
 <PageTitle>SolarUy | Parques</PageTitle>
@@ -32,8 +33,13 @@
     </div>
     <p class="parque-map-help">
         Vista visual, no geográfica. Pasá el cursor o enfocá un parque para ver sus nodos;
-        también podés seleccionarlo.
+        hacé clic en el parque para gestionar sus nodos o en un nodo para ir a paneles.
     </p>
+
+    @if (!string.IsNullOrWhiteSpace(_errorPaneles))
+    {
+        <div class="alert alert-warning" role="status">@_errorPaneles</div>
+    }
 
     @if (cargando)
     {
@@ -60,10 +66,9 @@
                     var seleccionado = parqueSeleccionadoId == parque.Id;
                     <article @key="parque.Id"
                              class="parque-map-item @(seleccionado ? "is-selected" : string.Empty)">
-                        <button class="parque-map-marker"
-                                type="button"
-                                aria-label="@($"{parque.Nombre}, {nodosParque.Count} nodos. Seleccionar para mostrar detalles.")"
-                                @onclick="() => AlternarParque(parque.Id)">
+                        <a class="parque-map-marker"
+                           href="@($"/admin/parques/{parque.Id}/nodos")"
+                           aria-label="@($"{parque.Nombre}, {nodosParque.Count} nodos. Gestionar nodos.")">
                             <span class="parque-map-icon" aria-hidden="true">☀</span>
                             <span class="parque-map-marker-copy">
                                 <strong>@parque.Nombre</strong>
@@ -73,7 +78,7 @@
                                 </span>
                             </span>
                             <span class="parque-map-pulse" aria-hidden="true"></span>
-                        </button>
+                        </a>
                         <div class="parque-map-orbit"
                              role="region"
                              aria-label="@($"Nodos del parque {parque.Nombre}")">
@@ -87,15 +92,29 @@
                             {
                                 @foreach (var nodo in nodosParque)
                                 {
+                                    var cantidadPaneles = _cantidadPanelesPorNodo?.GetValueOrDefault(nodo.Id);
                                     <a @key="nodo.Id"
                                        class="parque-map-node-chip"
-                                       href="@($"/admin/parques/{parque.Id}/nodos")"
-                                       aria-label="@($"Gestionar los nodos del parque {parque.Nombre}")"
+                                       href="/admin/paneles"
+                                       aria-label="@($"{nodo.Nombre}, {nodo.UbicacionDentroParque}. {(cantidadPaneles is int cantidad ? $"{cantidad} paneles registrados." : "Resumen de paneles no disponible.")} Ir a paneles.")"
                                        title="@nodo.UbicacionDentroParque">
                                         <span class="parque-map-node-dot" aria-hidden="true"></span>
                                         <span>
                                             <strong>@nodo.Nombre</strong>
                                             <small>@nodo.UbicacionDentroParque</small>
+                                            @if (cantidadPaneles is > 0)
+                                            {
+                                                <span class="parque-map-panels" aria-hidden="true">
+                                                    @for (var indice = 0; indice < Math.Min(cantidadPaneles.Value, 4); indice++)
+                                                    {
+                                                        <span class="parque-map-panel"></span>
+                                                    }
+                                                    @if (cantidadPaneles > 4)
+                                                    {
+                                                        <span class="parque-map-panel-extra">+@(cantidadPaneles.Value - 4)</span>
+                                                    }
+                                                </span>
+                                            }
                                         </span>
                                     </a>
                                 }
@@ -196,6 +215,8 @@
     private string mensajeError = string.Empty;
     private string mensajeExito = string.Empty;
     private string errorMapa = string.Empty;
+    private IReadOnlyDictionary<int, int>? _cantidadPanelesPorNodo;
+    private string _errorPaneles = string.Empty;
 
     protected override Task OnInitializedAsync() => CargarAsync();
 
@@ -203,6 +224,8 @@
     {
         cargando = true;
         errorMapa = string.Empty;
+        _cantidadPanelesPorNodo = null;
+        _errorPaneles = string.Empty;
         try
         {
             parques = await ServicioParques.ObtenerTodosAsync();
@@ -227,6 +250,33 @@
         finally
         {
             cargando = false;
+        }
+
+        if (parques is not null && string.IsNullOrWhiteSpace(errorMapa))
+        {
+            StateHasChanged();
+            await CargarResumenPanelesAsync();
+        }
+    }
+
+    private async Task CargarResumenPanelesAsync()
+    {
+        try
+        {
+            var paneles = await ServicioPaneles.ObtenerTodosAsync();
+            _cantidadPanelesPorNodo = paneles
+                .GroupBy(panel => panel.NodoId)
+                .ToDictionary(grupo => grupo.Key, grupo => grupo.Count());
+        }
+        catch (PanelesPersistenciaException exception)
+        {
+            Logger.LogError(exception, "No se pudo consultar el resumen de paneles del mapa.");
+            _errorPaneles = "El resumen de paneles no está disponible. Podés seguir navegando por parques y nodos.";
+        }
+        catch (AccesoNoAutorizadoException exception)
+        {
+            Logger.LogWarning(exception, "No se autorizó la consulta del resumen de paneles del mapa.");
+            _errorPaneles = "No se pudo acceder al resumen de paneles. Podés seguir navegando por parques y nodos.";
         }
     }
 

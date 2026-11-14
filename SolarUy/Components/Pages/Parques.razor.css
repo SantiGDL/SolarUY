@@ -101,12 +101,14 @@
     color: #142a40;
     cursor: pointer;
     text-align: left;
+    text-decoration: none;
     transition: transform .18s ease, box-shadow .18s ease, border-color .18s ease;
 }
 
 .parque-map-marker:hover,
 .parque-map-item:focus-within .parque-map-marker,
 .parque-map-item.is-selected .parque-map-marker {
+    color: #142a40;
     transform: translateY(-4px);
     border-color: #1b9265;
     box-shadow: 0 14px 34px #173a3830;
@@ -252,7 +254,30 @@
     box-shadow: 0 0 0 3px #1b926520;
 }
 
+.parque-map-panels {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    margin-top: 2px;
+}
+
+.parque-map-panel {
+    flex: 0 0 18px;
+    height: 11px;
+    border: 1px solid #164c91;
+    border-radius: 2px;
+    background: #2878cf;
+}
+
+.parque-map-panel-extra {
+    color: #285481;
+    font-size: .67rem;
+    font-weight: 700;
+    white-space: nowrap;
+}
+
 .parque-map-node-empty {
+    pointer-events: none;
     top: 50%;
     left: 50%;
     width: auto;
