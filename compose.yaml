@@ -46,7 +46,10 @@ services:
       KC_BOOTSTRAP_ADMIN_PASSWORD: ${KEYCLOAK_BOOTSTRAP_PASSWORD:?Define KEYCLOAK_BOOTSTRAP_PASSWORD in .env}
       KC_HEALTH_ENABLED: "true"
     ports:
-      - "8080:8080"
+      # Acceso desde esta computadora por IPv4; evita timeouts con localhost por IPv6.
+      - "127.0.0.1:8080:8080"
+      # Para acceder desde otros equipos, comentar la línea anterior y activar esta:
+      # - "8080:8080"
     volumes:
       - ./SolarUyKeycloak/solaruy-realm.json:/opt/keycloak/data/import/solaruy-realm.json:ro
       - solaruy_keycloak_data:/opt/keycloak/data/h2

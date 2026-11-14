@@ -9,7 +9,6 @@
 @inject NavigationManager Navegacion
 @inject ILogger<SeleccionParqueNodos> Logger
 
-<PageTitle>SolarUy | Nodos</PageTitle>
 
 <section class="admin-card" aria-labelledby="seleccion-nodos-title">
     <p class="eyebrow">GESTIÓN DE NODOS</p>
@@ -41,7 +40,6 @@
                 }
             </select>
         </div>
-        <p class="text-break"><span class="text-muted">Dirección del listado:</span> @Navegacion.ToAbsoluteUri(RutaNodos)</p>
         <a class="btn btn-primary" href="@RutaNodos">Ver nodos</a>
     }
 </section>
