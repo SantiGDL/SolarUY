@@ -29,16 +29,18 @@ y los controles de calidad del proyecto.
 - No considerar que una compilación exitosa demuestra por sí sola
   el cumplimiento de las reglas arquitectónicas.
 
-3. Pruebas estructurales con ArchUnitNET
-- Ejecutar las pruebas de ArchUnitNET cuando estén configuradas.
-- Si una prueba falla, leer el diagnóstico y corregir el código fuente
-  que incumple la regla.
-- Volver a ejecutar las pruebas afectadas hasta resolver el problema.
-- No trasladar al usuario la corrección de un error introducido por el agente.
-- Si las pruebas estructurales todavía no existen, revisar manualmente
-  las dependencias y declarar que la verificación automática no está disponible.
-- No crear ni instalar ArchUnitNET o un proyecto de calidad automáticamente
-  sin que esa configuración forme parte de la tarea solicitada.
+### 3. Pruebas estructurales con ArchUnitNET
+
+- Cada vez que se agregue o modifique una funcionalidad, verificá que las pruebas de arquitectura cubran los tipos y las dependencias afectados. Después de compilar y antes de entregar, ejecutá desde la raíz del repositorio:
+
+  ```powershell
+  dotnet test SolarUyPruebas/Arquitectura/SolarUyArquitecturaPruebas.csproj
+  ```
+
+- Si el cambio incorpora un módulo, una capa, un contrato local, un evento expuesto o un punto de composición, comprobá que los selectores existentes incluyan los tipos que correspondan. Si queda sin cubrir una regla de arquitectura ya acordada, agregá la prueba o ampliá su cobertura conforme a la sección 5.
+- Si una prueba falla por una dependencia introducida por el cambio, corregí el código fuente y volvé a ejecutar las pruebas afectadas. Si el incumplimiento es preexistente y queda fuera del alcance de la tarea, informá la regla, el tipo de origen y el tipo referenciado.
+- Las pruebas de arquitectura se ejecutan junto con las verificaciones que correspondan al cambio. Cuando se agregue o modifique comportamiento de Dominio, aplicá también las pruebas unitarias con xUnit de la sección 4.
+
 
 4. Pruebas unitarias de Dominio
 - Cada vez que se agregue o modifique comportamiento de Dominio,

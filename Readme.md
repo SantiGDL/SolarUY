@@ -192,8 +192,20 @@ Los volúmenes conservan los datos de MySQL, Keycloak y SonarQube entre arranque
 
 La compilación comprueba que los proyectos pueden construirse. Las pruebas xUnit
 de Parques están en `SolarUyPruebas/Unitarias/Parques/SolarUyParquesPruebas.csproj`.
-No hay reglas automatizadas con ArchUnitNET identificadas en esta integración.
-Ejecutar `dotnet test` por sí solo no realiza un análisis de SonarQube.
+Las pruebas de arquitectura con ArchUnitNET están en la solución y se pueden
+ejecutar desde Rider o PowerShell, sin levantar la aplicación ni sus servicios.
+
+```powershell
+dotnet test SolarUyPruebas/Arquitectura/SolarUyArquitecturaPruebas.csproj
+```
+
+Comprueban los contratos entre módulos, los límites de Dominio, Aplicación y
+Presentación, y la clasificación de `Program` como punto de composición.
+Los fallos muestran la regla, el tipo que origina la dependencia y el tipo
+referenciado. La [verificación inicial](Funcionalidades/ArchUnitNET/tasks.md#resultados)
+registra los incumplimientos existentes y las correcciones propuestas.
+La lógica de negocio y los tiempos de vida de DI se revisan en el código.
+El análisis de SonarQube se ejecuta por separado.
 
 Los resultados y limitaciones de cada tarea se registran en sus documentos:
 [Home](Funcionalidades/PaginaPrincipal/tasks.md) y
