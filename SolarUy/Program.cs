@@ -5,6 +5,7 @@ using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Authentication.OpenIdConnect;
 using Microsoft.AspNetCore.Antiforgery;
 using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.HttpOverrides;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using SolarUy.Backend.Infraestructura.Persistencia;
@@ -29,6 +30,20 @@ using SolarUy.Components;
 using SolarUy.Components.Servicios;
 
 var builder = WebApplication.CreateBuilder(args);
+var altaDisponibilidad = builder.Configuration.GetValue<bool>("HA:Habilitada");
+if (altaDisponibilidad)
+{
+    var redProxy = builder.Configuration["HA:RedProxy"]
+        ?? throw new InvalidOperationException("Falta HA:RedProxy para confiar en la red del proxy.");
+    builder.Services.Configure<ForwardedHeadersOptions>(options =>
+    {
+        options.ForwardedHeaders = ForwardedHeaders.XForwardedFor |
+            ForwardedHeaders.XForwardedHost | ForwardedHeaders.XForwardedProto;
+        options.ForwardLimit = 1;
+        options.KnownIPNetworks.Add(System.Net.IPNetwork.Parse(redProxy));
+        options.AllowedHosts.Add("localhost");
+    });
+}
 
 builder.Services.AddRazorComponents()
     .AddInteractiveServerComponents()
@@ -42,13 +57,15 @@ builder.Services.AddAuthentication(options =>
     })
     .AddCookie(options =>
     {
-        options.Cookie.Name = "SolarUy.Session";
+        options.Cookie.Name = altaDisponibilidad ? "SolarUy.HA.Session" : "SolarUy.Session";
         options.Cookie.HttpOnly = true;
     })
     .AddJwtBearer(JwtBearerDefaults.AuthenticationScheme, options =>
     {
         options.Authority = builder.Configuration["Keycloak:Authority"]
             ?? throw new InvalidOperationException("Falta configurar Keycloak:Authority.");
+        if (builder.Configuration["Keycloak:MetadataAddress"] is { Length: > 0 } metadataAddress)
+            options.MetadataAddress = metadataAddress;
         options.Audience = builder.Configuration["Keycloak:Audience"] ?? "account";
         options.RequireHttpsMetadata =
             builder.Configuration.GetValue(
@@ -68,6 +85,7 @@ builder.Services.AddAuthentication(options =>
     {
         options.Authority = builder.Configuration["Keycloak:Authority"]
             ?? throw new InvalidOperationException("Falta configurar Keycloak:Authority.");
+        options.MetadataAddress = builder.Configuration["Keycloak:MetadataAddress"];
         options.ClientId = builder.Configuration["Keycloak:ClientId"]
             ?? throw new InvalidOperationException("Falta configurar Keycloak:ClientId.");
         options.RequireHttpsMetadata =
@@ -135,6 +153,10 @@ Radzen.ServiceCollectionExtensions.AddRadzenComponents(builder.Services);
 builder.Services.AddHostedService<SolarUy.Backend.Modulos.Mediciones.Infraestructura.Sesiones.LimpiezaSesionesService>();
 
 var app = builder.Build();
+if (altaDisponibilidad)
+{
+    app.UseForwardedHeaders();
+}
 
 if (app.Environment.IsDevelopment())
 {
@@ -144,11 +166,11 @@ if (app.Environment.IsDevelopment())
 if (!app.Environment.IsDevelopment())
 {
     app.UseExceptionHandler("/Error", createScopeForErrors: true);
-    app.UseHsts();
+    if (!altaDisponibilidad) app.UseHsts();
 }
 
 app.UseStatusCodePagesWithReExecute("/not-found", createScopeForStatusCodePages: true);
-app.UseHttpsRedirection();
+if (!altaDisponibilidad) app.UseHttpsRedirection();
 app.UseAuthentication();
 app.UseAuthorization();
 

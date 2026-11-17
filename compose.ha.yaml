@@ -1,0 +1,50 @@
+# Usar junto a compose.yaml, desde la misma raíz y el mismo proyecto Compose.
+x-solaruy: &solaruy
+  image: solaruy:ha-local
+  build:
+    context: .
+    dockerfile: Dockerfile
+  environment:
+    ASPNETCORE_ENVIRONMENT: Production
+    HA__Habilitada: "true"
+    HA__RedProxy: ${HA_PROXY_NETWORK:?Define HA_PROXY_NETWORK con la subred del proyecto Compose existente}
+    ConnectionStrings__SolarUy: "Server=mysql;Port=3306;Database=solaruy;User=${MYSQL_USER:-solaruy_app};Password=${MYSQL_PASSWORD:?Define MYSQL_PASSWORD};"
+    Keycloak__Authority: http://localhost:8080/realms/solaruy
+    Keycloak__MetadataAddress: http://keycloak:8080/realms/solaruy/.well-known/openid-configuration
+    Keycloak__ClientId: solaruy
+    Keycloak__RequireHttpsMetadata: "false"
+  depends_on:
+    mysql:
+      condition: service_healthy
+    keycloak:
+      condition: service_started
+  healthcheck:
+    test: ["CMD", "curl", "--fail", "--silent", "http://localhost:8080/"]
+    interval: 5s
+    timeout: 3s
+    retries: 20
+    start_period: 15s
+
+services:
+  keycloak:
+    environment:
+      KC_HOSTNAME: http://localhost:8080
+      KC_HOSTNAME_BACKCHANNEL_DYNAMIC: "true"
+
+  solaruy1:
+    <<: *solaruy
+
+  solaruy2:
+    <<: *solaruy
+
+  nginx:
+    image: nginx:1.30.6-alpine
+    ports:
+      - "127.0.0.1:7000:80"
+    volumes:
+      - ./Infraestructura/AltaDisponibilidad/nginx.conf:/etc/nginx/nginx.conf:ro
+    depends_on:
+      solaruy1:
+        condition: service_healthy
+      solaruy2:
+        condition: service_healthy

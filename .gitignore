@@ -24,3 +24,4 @@ TestResults/
 .env
 .env.*
 !.env.example
+.local-ha/
