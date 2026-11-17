@@ -20,14 +20,17 @@
       "directAccessGrantsEnabled": false,
       "implicitFlowEnabled": false,
       "redirectUris": [
+        "http://localhost:7000/signin-oidc",
         "http://localhost:5058/signin-oidc",
         "https://localhost:7196/signin-oidc"
       ],
       "webOrigins": [
+        "http://localhost:7000",
         "http://localhost:5058",
         "https://localhost:7196"
       ],
       "attributes": {
+        "post.logout.redirect.uris": "http://localhost:7000/*##http://localhost:5058/*##https://localhost:7196/*",
         "pkce.code.challenge.method": "S256"
       },
       "protocolMappers": [

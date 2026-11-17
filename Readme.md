@@ -1,229 +1,308 @@
 # SolarUY
 
-Prueba de concepto académica del Taller .NET para la gestión de parques solares.
+Prueba de concepto académica del Taller .NET para gestionar parques solares,
+sus nodos y paneles, tareas de mantenimiento y mediciones. La aplicación utiliza
+Blazor Web App con Interactive Server y un monolito modular. La generación se
+representa mediante un simulador; no existe conexión con un inversor físico.
 
-La [documentación de arquitectura](Docs/Arquitectura.md) describe el estado de
-la implementación, los proyectos y tecnologías, la organización del repositorio
-y los diagramas de diseño.
+La página de inicio presenta la plataforma y permite ingresar al panel protegido.
+La imagen de dashboard que aparece dentro de la landing es ilustrativa.
 
-## Ejecución local con Docker
+![Página de inicio de SolarUY](Docs/Tutorial/Tutorial_1.png)
 
-Se necesita el SDK .NET 10, acceso a NuGet y Docker Desktop iniciado en modo
-contenedores Linux. Los comandos se ejecutan desde la raíz del repositorio en
-PowerShell. Como alternativa, con Docker Engine en Ubuntu/WSL 2, ejecutar allí
-los comandos de Docker y mantener los comandos dotnet en Windows.
+El panel administrativo reúne accesos a la gestión y un resumen de parques y
+tareas. Algunas secciones visuales siguen siendo provisionales; la gráfica
+ilustrativa del panel no representa mediciones reales.
 
-[compose.yaml](compose.yaml) configura tres servicios independientes:
+![Panel administrativo de SolarUY con una sesión autenticada](Docs/Tutorial/Tutorial_19.png)
 
-| Servicio | Función | Puerto local |
-| --- | --- | --- |
-| [MySQL](#mysql-base-de-datos) | Base de datos de parques, nodos y paneles. | 3306 |
-| [Keycloak](#keycloak-usuarios-e-inicio-de-sesión) | Proveedor de identidad: usuarios, autenticación y roles. | 8080 |
-| [SonarQube](#sonarqube-calidad-del-código) | Análisis de calidad del código. | 9000 |
+La [documentación de arquitectura](Docs/Arquitectura.md) reúne la estructura del
+repositorio y los diagramas de referencia. Algunas descripciones de estado de
+ese documento corresponden a etapas anteriores del proyecto.
 
-Docker descarga las imágenes necesarias. SolarUy se ejecuta desde Rider o
-mediante dotnet, fuera de los contenedores. No se necesita iniciar Sensor por
-separado. SonarQube se utiliza al analizar código; no es necesario para usar SolarUy.
+## 1. Prerrequisitos
 
-### Preparación compartida: credenciales locales
+- SDK **.NET 10**, necesario para restaurar dependencias, compilar y ejecutar.
+- **Docker Desktop** iniciado y configurado para contenedores Linux, con Docker Compose.
+- **PowerShell** para los comandos y el asistente de configuración en Windows.
+- Una copia del repositorio y conexión a Internet para descargar imágenes y paquetes NuGet.
+- Puertos locales **3306**, **8080**, **9000** y **5058** disponibles.
 
-Si no existe `.env`, ejecutar el asistente de Windows:
+Si falta alguna herramienta, consultar la [guía de instalación de prerrequisitos](Docs/Prerequisitos.md).
+Rider es opcional: la aplicación también se ejecuta desde la terminal.
+No se necesita instalar MySQL ni Keycloak directamente en Windows.
+
+## 2. Preparar y levantar el proyecto
+
+Abrir PowerShell en la **raíz del repositorio**, donde están `SolarUy.sln`,
+`compose.yaml` y la carpeta `Scripts`. Iniciar Docker Desktop.
+
+En una instalación nueva, **primero configurar las credenciales y después
+ejecutar Docker Compose**. El archivo Compose exige esas variables y no puede
+arrancar los servicios sin ellas. En los siguientes arranques, si `.env` y
+User Secrets ya están configurados, pasar directamente al arranque de contenedores.
+
+### Configuración asistida de credenciales
+
+Si todavía no existe `.env`, ejecutar:
 
 ```powershell
 powershell -NoProfile -ExecutionPolicy Bypass -File .\Scripts\Configurar-EntornoLocal.ps1
 ```
 
-El asistente pide las contraseñas en texto visible, ofrece conservar o cambiar
-los usuarios predeterminados y crea `.env` y la conexión de User Secrets con las
-mismas credenciales de MySQL. Si ya existe `.env`, avisa y espera una tecla antes
-de salir sin modificarlo. Para repetir la preparación, eliminarlo manualmente;
-para conservarlo, seguir la configuración manual indicada abajo.
+También se puede abrir `Scripts/Configurar-EntornoLocal.cmd` desde el Explorador.
+El asistente pide usuarios y contraseñas, muestra las contraseñas mientras se
+escriben y solicita confirmación antes de guardar. Su resultado es:
 
-Como alternativa, copiar el ejemplo y editar sus contraseñas antes de iniciar
-los contenedores:
+| Destino | Qué configura | Quién lo utiliza |
+| --- | --- | --- |
+| `.env` | Usuario y contraseñas de MySQL, y credenciales del administrador inicial de Keycloak. | Docker Compose al inicializar los servicios. |
+| User Secrets de .NET | `ConnectionStrings:SolarUy`, con la conexión del usuario MySQL elegido. | SolarUY al ejecutarse en Development. |
+
+`.env` está excluido de Git y SolarUY no lo lee automáticamente. User Secrets
+guarda la configuración fuera del repositorio; el proyecto ya incluye su
+`UserSecretsId`. La contraseña administrativa de Keycloak queda en `.env`,
+no en User Secrets. El asistente tampoco crea el usuario que ingresará a SolarUY.
+
+Si `.env` ya existe, el asistente se detiene sin modificarlo ni actualizar
+User Secrets. Conservar las credenciales existentes y completar los pasos
+manuales que falten. Cambiar `.env` no restablece las contraseñas de servicios
+cuyos volúmenes ya fueron inicializados.
+
+### Alternativa manual
+
+Si `.env` no existe, crearlo desde el ejemplo:
 
 ```powershell
 Copy-Item .env.example .env
 ```
 
-`.env` configura Docker Compose y está excluido de Git. SolarUy no lo lee
-automáticamente; utiliza User Secrets o variables de entorno.
+Editar `.env` y reemplazar todos los valores `replace-with-*` por contraseñas
+locales propias. Contiene estas variables:
 
-### MySQL: base de datos
+```dotenv
+MYSQL_ROOT_PASSWORD=REEMPLAZAR_CLAVE_ROOT
+MYSQL_USER=solaruy_app
+MYSQL_PASSWORD=REEMPLAZAR_CLAVE_MYSQL
+KEYCLOAK_BOOTSTRAP_ADMIN=admin
+KEYCLOAK_BOOTSTRAP_PASSWORD=REEMPLAZAR_CLAVE_KEYCLOAK
+```
 
-MySQL debe estar disponible antes de iniciar SolarUy: en Development, la
-aplicación aplica las migraciones al arrancar.
+Configurar la conexión de SolarUY con el mismo usuario y contraseña de MySQL:
 
 ```powershell
-docker compose up -d mysql
-docker compose ps -a mysql
+dotnet user-secrets set "ConnectionStrings:SolarUy" "Server=localhost;Port=3306;Database=solaruy;User=solaruy_app;Password=REEMPLAZAR_CLAVE_MYSQL;" --project SolarUy/SolarUy.csproj
+```
+
+Reemplazar el valor de ejemplo y ajustar `User` si se cambió `MYSQL_USER`.
+Como alternativa, la aplicación admite la variable de entorno
+`ConnectionStrings__SolarUy` en su proceso. No subir contraseñas ni `.env` a Git.
+
+### Iniciar los contenedores
+
+Con las credenciales preparadas, ejecutar desde la raíz:
+
+```powershell
+docker compose up -d
+docker compose ps -a
+```
+
+| Servicio | Función | Dirección local |
+| --- | --- | --- |
+| MySQL | Persistencia de la aplicación. | `localhost:3306` |
+| Keycloak | Usuarios, inicio de sesión y roles. | [Consola de administración](http://localhost:8080/admin/) |
+| SonarQube | Análisis de calidad durante el desarrollo. | [Consola de SonarQube](http://localhost:9000) |
+
+Esperar a que MySQL aparezca como **healthy** y que Keycloak termine de iniciar.
+`Running` indica que el contenedor está en ejecución, pero el servicio puede
+seguir inicializándose. Revisar sus registros si es necesario:
+
+```powershell
 docker compose logs --tail 50 mysql
+docker compose logs --tail 50 keycloak
 ```
 
-Esperar a que aparezca como `healthy`. Si se preparó `.env` manualmente,
-configurar también la conexión de la aplicación en Windows:
+El contenedor auxiliar `preparar-volumen-keycloak` debe terminar con **Exited (0)**:
+solo prepara los permisos del volumen. Keycloak importa el realm `solaruy` y
+el cliente desde [solaruy-realm.json](SolarUyKeycloak/solaruy-realm.json).
+Las cuentas de usuarios de la aplicación se crean después, desde su consola.
+
+El puerto de Keycloak se publica en `127.0.0.1` para el acceso local por IPv4.
+`compose.yaml` incluye comentada la alternativa para acceder desde otros equipos;
+se debe mantener una sola opción activa y volver a ejecutar `docker compose up -d keycloak`.
+
+SonarQube no es necesario para utilizar SolarUY. Para iniciar solo los servicios
+necesarios para la aplicación, se puede usar `docker compose up -d mysql keycloak`.
+
+### Ejecutar SolarUY
+
+Con MySQL y Keycloak disponibles:
 
 ```powershell
-dotnet user-secrets set "ConnectionStrings:SolarUy" "Server=localhost;Port=3306;Database=solaruy;User=solaruy_app;Password=REEMPLAZAR_PASSWORD;" --project SolarUy/SolarUy.csproj
+dotnet restore SolarUy.sln
+dotnet build SolarUy.sln
+dotnet run --project SolarUy/SolarUy.csproj --launch-profile http
 ```
 
-Reemplazar `REEMPLAZAR_PASSWORD` por `MYSQL_PASSWORD` y ajustar `User` si se
-cambió `MYSQL_USER`. El asistente ya realiza este paso. También se admite la
-variable de entorno `ConnectionStrings__SolarUy` en el proceso de SolarUy.
+También se puede abrir la solución en Rider y ejecutar el perfil `http` de
+SolarUy. No iniciar Sensor por separado. En Development, SolarUY aplica las
+migraciones de MySQL al arrancar. Cuando aparezca `Now listening on`, abrir
+[la aplicación](http://localhost:5058).
 
-Para abrir la consola de MySQL:
+Antes de ingresar al panel por primera vez, completar el tutorial de Keycloak
+de la sección siguiente. Si el usuario ya está preparado, pulsar **Ingresar al panel**.
+
+### Consultar las tablas con MySQL Workbench — opcional
+
+MySQL Workbench permite explorar la base desde una interfaz gráfica y no es
+un requisito de SolarUY. La configuración prevista es una conexión TCP/IP a
+`127.0.0.1`, puerto `3306`, con `MYSQL_USER`, su contraseña y el esquema `solaruy`.
+Las tablas se crean cuando la aplicación aplica las migraciones.
+**La prueba práctica de esta conexión con Workbench está pendiente.**
+
+Para consultar MySQL desde la terminal ya se dispone de:
 
 ```powershell
 docker compose exec mysql mysql -uroot -p
 ```
 
-Usar la contraseña root con la que se inicializó el volumen. Cambiar las
-contraseñas de `.env` no actualiza los usuarios de una base ya inicializada.
+Ingresar la contraseña root con la que se inicializó el volumen.
 
-### Keycloak: usuarios e inicio de sesión
+### Detener y volver a iniciar
 
-Keycloak permite iniciar sesión en las páginas protegidas de SolarUy.
+`docker compose stop` detiene los servicios y conserva los datos.
+Para volver a iniciarlos, ejecutar `docker compose up -d` y luego SolarUY.
+Los volúmenes conservan bases y usuarios entre arranques; `docker compose down -v`
+elimina esos datos y no es un paso de la configuración habitual.
 
-```powershell
-docker compose up -d keycloak
-docker compose logs --tail 50 keycloak
-```
+## 3. Configurar el usuario de Keycloak
 
-Compose ejecuta también un contenedor auxiliar BusyBox para preparar permisos;
-su finalización exitosa es esperada. El realm `solaruy` y el cliente OIDC se
-importan desde [solaruy-realm.json](SolarUyKeycloak/solaruy-realm.json).
-Docker inicia Keycloak con `start-dev`, su modo de desarrollo local.
+SolarUY utiliza Keycloak como proveedor de identidad mediante OpenID Connect:
+Keycloak autentica al usuario y comunica sus roles; la aplicación valida los
+permisos de las operaciones protegidas. La cuenta administrativa de la consola
+de Keycloak y la cuenta del usuario de SolarUY son distintas.
 
-Después de definir las credenciales administrativas locales y levantar los
-contenedores, abrir la consola de Keycloak en `http://localhost:8080/admin/`
-(también se puede llegar desde `http://localhost:8080/`). Iniciar sesión con
-el usuario `KEYCLOAK_BOOTSTRAP_ADMIN` y la contraseña
-`KEYCLOAK_BOOTSTRAP_PASSWORD` definidos en `.env`.
+Seguir el [tutorial ilustrado de Keycloak](Docs/ReadmeKeycloak.md) para crear
+un usuario en el realm `solaruy`, asignarle contraseña y el rol `ADMIN`, e
+ingresar al panel. Incluye la solución para una sesión que conserva permisos
+anteriores a la asignación del rol.
 
-![Consola de administración de Keycloak después de iniciar sesión](Docs/Keyloak/Keyloak1.png)
+## 4. Balanceador de Carga
 
-Seleccionar el realm `solaruy` y abrir **Users** en la barra lateral.
+SolarUY incluye una prueba de concepto de alta disponibilidad con **Nginx** como
+proxy inverso y dos instancias de la aplicación en Docker. Utiliza un esquema
+**activo-pasivo con respaldo en caliente**: ambas instancias están encendidas,
+pero `solaruy1` atiende normalmente las solicitudes y `solaruy2` queda como
+reserva mediante la opción `backup` de Nginx.
 
-![Menú lateral de Keycloak con la opción Users](Docs/Keyloak/Keyloak2.png)
+Si la principal deja de responder, Nginx puede dirigir las nuevas conexiones a
+la reserva. Cuando la principal vuelve a estar disponible, recupera la atención
+de nuevas solicitudes. Ambas instancias utilizan la misma imagen y comparten
+el MySQL y el Keycloak existentes, dentro del mismo proyecto Docker Compose.
 
-Elegir **Create new user** y completar el formulario.
+### Preparación y arranque
 
-![Listado de usuarios del realm solaruy con el botón Create new user](Docs/Keyloak/Keyloak3.png)
+Primero completar la configuración de las secciones anteriores: credenciales,
+base de datos con sus tablas y usuario de Keycloak. El puerto **7000** debe estar
+libre. Las instancias Docker no aplican migraciones al arrancar.
 
-![Formulario de creación de usuario en Keycloak](Docs/Keyloak/Keyloak4.png)
-
-**Required user actions** permite exigir acciones que el usuario deberá
-completar para iniciar sesión, como cambiar la contraseña o configurar otro
-método de autenticación. En esta configuración se deja vacío porque solo se
-pide usuario y contraseña.
-
-Después de crear el usuario, abrir **Credentials**
-para asignarle una contraseña; desactivar **Temporary** si no se quiere exigir
-un cambio de contraseña en el primer inicio de sesión. Para permitirle
-operaciones restringidas a administradores de SolarUy, asignarle el rol de
-realm `ADMIN` desde **Role mapping**. Finalmente, iniciar sesión en SolarUy
-con este usuario nuevo. El administrador de Keycloak no es automáticamente
-un usuario de SolarUy.
-
-### SonarQube: calidad del código
-
-SonarQube analiza posibles errores, seguridad, mantenibilidad y duplicación.
-El scanner de Windows envía los resultados al servidor del contenedor.
+Con Docker Desktop y los servicios habituales iniciados, ejecutar el
+[configurador de alta disponibilidad](Scripts/Configurar-AltaDisponibilidad.cmd)
+mediante doble clic o desde PowerShell en la raíz del repositorio:
 
 ```powershell
-docker compose up -d sonarqube
-docker compose logs --tail 50 sonarqube
+.\Scripts\Configurar-AltaDisponibilidad.cmd
 ```
 
-La [guía rápida de uso de SonarQube](Docs/ReadmeSonarQube.md) contiene los pasos
-para crear un token y un bloque de comandos para repetir el análisis. El panel
-muestra el último análisis enviado; no se actualiza al guardar un archivo.
-Esta instalación está destinada a evaluación local.
+El configurador detecta la subred Docker existente y configura `HA_PROXY_NETWORK`
+en `.env`. También agrega al cliente `solaruy` de Keycloak únicamente las
+direcciones que falten para acceder por `http://localhost:7000`, conservando las
+de Rider y las demás configuraciones. Puede ejecutarse varias veces: si todo está
+preparado, no realiza cambios. No reinicia servicios ni modifica volúmenes y es
+independiente del configurador local existente.
 
-Con SonarQube iniciado, abrir `http://localhost:9000`. En una instalación nueva,
-las credenciales de fábrica son **usuario `admin` y contraseña `admin`**.
-Después de ingresar, establecer una contraseña propia cuando la consola lo
-solicite. Esta cuenta es independiente de las credenciales de `.env` y Keycloak.
-Para las instalaciones locales del equipo, se sugiere opcionalmente la contraseña
-`Solar_Uy1234`, que cumple los requisitos mostrados por SonarQube.
+La [guía de alta disponibilidad](Docs/AltaDisponibilidad.md) detalla los
+prerrequisitos y cómo resolver errores. Estas son las entradas que verifica
+automáticamente en Keycloak; no es necesario agregarlas manualmente:
 
-![Pantalla de inicio de sesión de SonarQube](Docs/SonarQube/SonarQube0.png)
-
-### Iniciar SolarUy
-
-Con MySQL healthy y Keycloak operativo, ejecutar en Windows:
-
-```powershell
-dotnet tool restore
-dotnet build SolarUy.sln
-dotnet run --project SolarUy/SolarUy.csproj --launch-profile http
-```
-
-También se puede usar el perfil `http` de Rider. Abrir http://localhost:5058
-cuando aparezca `Now listening on`. El perfil HTTPS utiliza
-https://localhost:7196 y requiere un certificado de desarrollo confiable.
-La configuración local de Keycloak está en
-[appsettings.Development.json](SolarUy/appsettings.Development.json).
-
-### Comandos útiles y problemas de arranque
-
-| Comando | Uso |
+| Campo de Keycloak | Dirección |
 | --- | --- |
-| `docker compose up -d mysql keycloak` | Iniciar los servicios necesarios para SolarUy. |
-| `docker compose up -d` | Iniciar todos los servicios, incluido SonarQube. |
-| `docker compose ps -a` | Consultar el estado de los contenedores. |
-| `docker compose stop` | Detener los servicios conservando los datos. |
-| `docker compose stop sonarqube` | Detener únicamente SonarQube. |
+| Valid redirect URIs | `http://localhost:7000/signin-oidc` |
+| Web origins | `http://localhost:7000` |
+| Valid post logout redirect URIs | `http://localhost:7000/*` |
 
-Los volúmenes conservan los datos de MySQL, Keycloak y SonarQube entre arranques.
-`docker compose down -v` elimina esos volúmenes y sus datos.
-
-- **Falta ConnectionStrings:SolarUy:** configurar User Secrets según la sección de MySQL.
-- **Error de conexión a MySQL:** comprobar estado healthy y puerto 3306.
-- **Access denied en MySQL:** verificar las credenciales del usuario existente;
-  cambiar `.env` no cambia la contraseña guardada en MySQL.
-- **Error al iniciar sesión:** comprobar Keycloak en el puerto 8080 y utilizar
-  un usuario del realm `solaruy`, distinto de la cuenta administrativa de Keycloak.
-- **SonarQube no responde:** esperar el arranque y consultar sus registros.
-- **ERR_CONNECTION_REFUSED en SolarUy:** revisar la salida de Rider o dotnet;
-  la aplicación puede haberse cerrado antes de escuchar.
-
-## Verificación y pendientes
-
-La compilación comprueba que los proyectos pueden construirse. Las pruebas xUnit
-de Parques están en `SolarUyPruebas/Unitarias/Parques/SolarUyParquesPruebas.csproj`.
-Las pruebas de arquitectura con ArchUnitNET están en la solución y se pueden
-ejecutar desde Rider o PowerShell, sin levantar la aplicación ni sus servicios.
+Desde la raíz del repositorio, combinar los dos archivos Compose:
 
 ```powershell
-dotnet test SolarUyPruebas/Arquitectura/SolarUyArquitecturaPruebas.csproj
+docker compose -f compose.yaml -f compose.ha.yaml config --quiet
+docker compose -f compose.yaml -f compose.ha.yaml build solaruy1
+docker compose -f compose.yaml -f compose.ha.yaml up -d --no-build mysql keycloak solaruy1 solaruy2 nginx
+docker compose -f compose.yaml -f compose.ha.yaml ps
 ```
 
-Comprueban los contratos entre módulos, los límites de Dominio, Aplicación y
-Presentación, y la clasificación de `Program` como punto de composición.
-Los fallos muestran la regla, el tipo que origina la dependencia y el tipo
-referenciado. La [verificación inicial](Funcionalidades/ArchUnitNET/tasks.md#resultados)
-registra los incumplimientos existentes y las correcciones propuestas.
-La lógica de negocio y los tiempos de vida de DI se revisan en el código.
-El análisis de SonarQube se ejecuta por separado.
+Esperar a que ambas aplicaciones estén **healthy** y Keycloak esté disponible.
+Abrir [SolarUY mediante Nginx](http://localhost:7000) e ingresar al panel.
+El acceso utiliza HTTP exclusivamente para esta demostración local.
 
-Los resultados y limitaciones de cada tarea se registran en sus documentos:
-[Home](Funcionalidades/PaginaPrincipal/tasks.md) y
-[panel administrativo](Funcionalidades/PanelAdministrativo/tasks.md).
-En el entorno de verificación se detectaron errores locales de Data Protection
-con claves DPAPI al abrir las páginas interactivas de plantilla `/counter` y
-`/weather`; esa revisión sigue pendiente. Las pantallas Home y panel son
-provisionales y no incluyen esas operaciones interactivas.
+### Comprobar la conmutación
 
-## ¿Cómo utilizamos la IA?
+Con la aplicación funcionando, detener únicamente la instancia principal:
 
-Durante este Sprint estuvimos probando utilizar ChatGPT Desktop en lugar del CLI,
-principalmente por la comodidad que ofrece para adjuntar imágenes y documentos.
-Esto resulta especialmente útil con archivos PDF, ya que la extensión de Rider
-no permite enviarlos directamente, siendo necesario dejarlos en una carpeta e
-indicarle al agente dónde encontrarlos.
+```powershell
+docker compose -f compose.yaml -f compose.ha.yaml stop solaruy1
+```
 
-Por otro lado, para consultas más generales seguimos utilizando el chat
-convencional, ya sea desde la propia aplicación de escritorio o desde la versión
-web, dado que cuenta con un contexto más personalizado sobre nuestras
-preferencias, como el estilo, formato y nivel de detalle de las respuestas.
+Recargar la página y volver a iniciar sesión si lo solicita. La reserva atenderá
+las nuevas conexiones. Los registros de Nginx muestran en `upstream` la dirección
+de la instancia que respondió:
+
+```powershell
+docker compose -f compose.yaml -f compose.ha.yaml logs --tail 20 nginx
+```
+
+Para recuperar la principal:
+
+```powershell
+docker compose -f compose.yaml -f compose.ha.yaml start solaruy1
+```
+
+Esperar a que esté disponible y recargar para comprobar el retorno. Nginx admite
+las conexiones WebSocket que necesita Blazor Interactive Server, pero no traslada
+un circuito activo entre instancias. Una caída puede perder formularios sin
+guardar y simulaciones en curso; se acepta recargar y autenticarse nuevamente.
+No se sincroniza el estado en memoria ni se recuperan sesiones anteriores.
+
+Esta prueba cubre la caída de una instancia de SolarUY. Nginx, MySQL, Keycloak
+y el equipo siguen siendo puntos únicos de fallo. El desarrollo habitual desde
+Rider conserva sus puertos y configuración. No borrar volúmenes ni ejecutar
+`docker compose down -v` para realizar la demostración.
+
+## 5. SonarQube durante el desarrollo
+
+Se utilizó SonarQube durante el desarrollo asistido por IA para revisar posibles
+errores, seguridad, mantenibilidad y duplicación. Es una herramienta de análisis
+de código; complementa la compilación, las pruebas y la revisión humana.
+
+La [guía de SonarQube](Docs/ReadmeSonarQube.md) explica cómo preparar su acceso,
+generar un token, ejecutar el scanner y consultar el Quality Gate. El panel
+muestra el último análisis enviado: no se actualiza al guardar código.
+`dotnet test` por sí solo no ejecuta SonarQube.
+
+Las pruebas xUnit existentes se ejecutan desde la raíz con:
+
+```powershell
+dotnet test SolarUyPruebas/Unitarias/Parques/SolarUyParquesPruebas.csproj
+```
+
+## 6. ¿Cómo programamos con IA?
+
+Trabajamos con un arnés de IA: un entorno que permite al agente leer el
+repositorio, proponer cambios, editar archivos y ejecutar verificaciones bajo
+las instrucciones de [AGENTS.md](AGENTS.md) y las [reglas del proyecto](.agents/Reglas/).
+Para organizar cada funcionalidad utilizamos `requirements.md` para definir
+qué se necesita, `specs.md` para diseñar cómo resolverlo y `tasks.md` para dividir
+y registrar el trabajo en [Funcionalidades/](Funcionalidades/). Revisamos los
+requisitos y las propuestas, implementamos por tareas y contrastamos el resultado
+con compilación, pruebas aplicables y revisiones de SonarQube. Las decisiones y
+la revisión final siguen a cargo del equipo; la salida del agente no constituye
+por sí sola una validación del cambio.
