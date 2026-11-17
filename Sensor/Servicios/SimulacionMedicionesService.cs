@@ -5,84 +5,107 @@ namespace Sensor.Servicios;
 public sealed class SimulacionMedicionesService : IAsyncDisposable
 {
     private ConfiguracionMotorDto? _configuracion;
-    private CancellationTokenSource? _cancelacion;
+    private CancellationTokenSource? _cancelacionCiclo;
     private Task? _ciclo;
-    private readonly SemaphoreSlim _control = new(1, 1);
+    // Configurar y detener esperan su turno para que exista un solo ciclo.
+    private readonly SemaphoreSlim _controlConfiguracion = new(1, 1);
     public ConfiguracionMotorDto? Configuracion => _configuracion;
 
     public async Task AplicarAsync(ConfiguracionMotorDto configuracion,
         Func<EntregaMotorDto, CancellationToken, Task> enviar)
     {
-        await _control.WaitAsync();
+        await _controlConfiguracion.WaitAsync();
         try
         {
-            var anterior = _configuracion;
-            if (anterior is not null && configuracion.Version < anterior.Version) return;
-            var mismoNodo = anterior?.ParqueId == configuracion.ParqueId && anterior.NodoId == configuracion.NodoId;
-            if (anterior?.Version == configuracion.Version)
-                configuracion = configuracion with { Paneles = configuracion.Paneles.Select(p =>
+            var configuracionAnterior = _configuracion;
+            if (configuracionAnterior is not null && configuracion.Version < configuracionAnterior.Version) return;
+
+            var mismoParque = configuracionAnterior?.ParqueId == configuracion.ParqueId;
+            var mismoNodo = mismoParque && configuracionAnterior?.NodoId == configuracion.NodoId;
+            if (configuracionAnterior is not null && configuracionAnterior.Version == configuracion.Version)
+            {
+                // Una configuración repetida puede llegar después de un cambio de habilitación.
+                var paneles = configuracion.Paneles.Select(panel =>
                 {
-                    var previo = anterior.Paneles.FirstOrDefault(a => a.Id == p.Id);
-                    return previo?.RevisionEstado > p.RevisionEstado ? previo : p;
-                }).ToArray() };
+                    var panelAnterior = configuracionAnterior.Paneles.FirstOrDefault(p => p.Id == panel.Id);
+                    return panelAnterior?.RevisionEstado > panel.RevisionEstado ? panelAnterior : panel;
+                }).ToArray();
+                configuracion = configuracion with { Paneles = paneles };
+            }
+
+            // Esperamos el fin del ciclo anterior antes de generar para otro nodo.
             if (!mismoNodo) await DetenerCicloAsync();
             _configuracion = configuracion;
             if (_ciclo is null)
             {
-                _cancelacion = new CancellationTokenSource();
-                _ciclo = EjecutarAsync(enviar, _cancelacion.Token);
+                _cancelacionCiclo = new CancellationTokenSource();
+                _ciclo = GenerarMedicionesAsync(enviar, _cancelacionCiclo.Token);
             }
         }
-        finally { _control.Release(); }
+        finally { _controlConfiguracion.Release(); }
     }
 
     public void CambiarHabilitacion(EstadoPanelMotorDto estado)
     {
-        var c = _configuracion;
-        if (c is null || c.SesionId != estado.SesionId || c.Version != estado.Version) return;
-        _configuracion = c with { Paneles = c.Paneles.Select(p => p.Id == estado.PanelId &&
-            estado.RevisionEstado >= p.RevisionEstado ? p with
-            { Deshabilitado = estado.Deshabilitado, RevisionEstado = estado.RevisionEstado } : p).ToArray() };
+        var configuracion = _configuracion;
+        if (configuracion is null || configuracion.SesionId != estado.SesionId ||
+            configuracion.Version != estado.Version) return;
+
+        var paneles = configuracion.Paneles.Select(panel =>
+        {
+            if (panel.Id != estado.PanelId || estado.RevisionEstado < panel.RevisionEstado) return panel;
+            return panel with { Deshabilitado = estado.Deshabilitado, RevisionEstado = estado.RevisionEstado };
+        }).ToArray();
+        _configuracion = configuracion with { Paneles = paneles };
     }
 
-    private async Task EjecutarAsync(Func<EntregaMotorDto, CancellationToken, Task> enviar, CancellationToken ct)
+    private async Task GenerarMedicionesAsync(Func<EntregaMotorDto, CancellationToken, Task> enviar,
+        CancellationToken cancelacionCiclo)
     {
         using var reloj = new PeriodicTimer(TimeSpan.FromSeconds(5));
         try
         {
-            while (await reloj.WaitForNextTickAsync(ct))
+            while (await reloj.WaitForNextTickAsync(cancelacionCiclo))
             {
-                var c = _configuracion;
-                if (c is null) continue;
+                // Todas las lecturas del tick salen de la misma configuración.
+                var configuracion = _configuracion;
+                if (configuracion is null) continue;
                 var fecha = DateTimeOffset.UtcNow;
-                var lecturas = c.Paneles.Where(p => !p.Deshabilitado).Select(p =>
+                var lecturas = configuracion.Paneles.Where(p => !p.Deshabilitado).Select(p =>
                     new LecturaMotorDto(p.Id, p.RevisionEstado, Random.Shared.NextDouble() * p.PotenciaActual, fecha)).ToArray();
                 if (lecturas.Length == 0) continue;
-                try { await enviar(new(c.SesionId, Guid.NewGuid(), c.Version, c.ParqueId, c.NodoId, lecturas), ct); }
-                catch (Exception) when (!ct.IsCancellationRequested)
+                var entrega = new EntregaMotorDto(configuracion.SesionId, Guid.NewGuid(),
+                    configuracion.Version, configuracion.ParqueId, configuracion.NodoId, lecturas);
+                try
+                {
+                    await enviar(entrega, cancelacionCiclo);
+                }
+                catch (Exception) when (!cancelacionCiclo.IsCancellationRequested)
                 {
                     // No se reenvían entregas inciertas ni se inventa historia local.
                     // El próximo tick conserva la cadencia y genera una muestra nueva.
                 }
             }
         }
-        catch (OperationCanceledException) when (ct.IsCancellationRequested) { }
+        catch (OperationCanceledException) when (cancelacionCiclo.IsCancellationRequested) { }
     }
 
     private async Task DetenerCicloAsync()
     {
-        if (_cancelacion is null) return;
-        await _cancelacion.CancelAsync();
+        if (_cancelacionCiclo is null) return;
+        // Interrumpimos la espera del temporizador o del envío antes de liberar el ciclo.
+        await _cancelacionCiclo.CancelAsync();
         if (_ciclo is not null) await _ciclo;
-        _cancelacion.Dispose();
-        _cancelacion = null;
+        _cancelacionCiclo.Dispose();
+        _cancelacionCiclo = null;
         _ciclo = null;
     }
     public async Task DetenerAsync()
     {
-        await _control.WaitAsync();
+        // El cierre espera su turno aunque ya se haya cancelado el ciclo.
+        await _controlConfiguracion.WaitAsync();
         try { await DetenerCicloAsync(); }
-        finally { _control.Release(); }
+        finally { _controlConfiguracion.Release(); }
     }
     public ValueTask DisposeAsync() => new(DetenerAsync());
 }

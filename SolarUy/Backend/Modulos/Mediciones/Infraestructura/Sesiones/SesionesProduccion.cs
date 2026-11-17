@@ -7,6 +7,7 @@ namespace SolarUy.Backend.Modulos.Mediciones.Infraestructura.Sesiones;
 public sealed class SesionesProduccion : ISesionesProduccion
 {
     private readonly ConcurrentDictionary<Guid, SesionProduccion> _sesiones = new();
+    // Varias sesiones pueden elegir el mismo nodo y deben coordinar los cambios con las entregas.
     private readonly ConcurrentDictionary<int, SemaphoreSlim> _nodos = new();
     public SesionProduccion Crear(string propietario)
     {

@@ -19,4 +19,4 @@ que todas las funcionalidades estén implementadas.
 ## Reglas generales
 
 Antes de diseñar o modificar código, lee todos los archivos
-Markdown de `.agents/rules/` y respeta sus instrucciones.
+Markdown de `.agents/Reglas/` y respeta sus instrucciones.

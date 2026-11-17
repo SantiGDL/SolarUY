@@ -8,6 +8,7 @@ using SolarUy.Components.Servicios;
 namespace SolarUy.Backend.Modulos.Mediciones.Interfaz.SignalR;
 
 [Authorize(Roles = "ADMIN")]
+// Traduce mensajes del sensor y pasa a Aplicación la identidad y la conexión que los enviaron.
 public sealed class MedicionesHub(MedicionesService servicio, ILogger<MedicionesHub> logger) : Hub
 {
     public Task Latido(Guid sesionId) => EjecutarAsync(() => servicio.LatidoAsync(
@@ -30,6 +31,7 @@ public sealed class MedicionesHub(MedicionesService servicio, ILogger<Mediciones
     }
     private async Task EjecutarAsync(Func<Task> operacion)
     {
+        // El sensor recibe los errores esperados. Los detalles internos quedan en el registro.
         try { await operacion(); }
         catch (ArgumentException ex) { throw new HubException(ex.Message); }
         catch (Exception ex)
