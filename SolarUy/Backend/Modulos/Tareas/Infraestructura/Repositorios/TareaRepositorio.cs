@@ -1,3 +1,4 @@
+using SolarUy.Backend.Modulos.Parques.Interfaz.Apis.Local.Contratos;
 using Microsoft.EntityFrameworkCore;
 using MySql.Data.MySqlClient;
 using SolarUy.Backend.Infraestructura.Persistencia;
@@ -10,7 +11,8 @@ namespace SolarUy.Backend.Modulos.Tareas.Infraestructura.Repositorios;
 
 public sealed class TareaRepositorio(
     IDbContextFactory<ParquesDbContext> contextFactory,
-    ILogger<TareaRepositorio> logger) : ITareaRepositorio
+    ILogger<TareaRepositorio> logger,
+    IConsultaPaneles paneles) : ITareaRepositorio
 {
     public async Task<IReadOnlyList<TareaMantenimiento>> ListarAsync(
         CancellationToken cancellationToken = default)
@@ -55,10 +57,7 @@ public sealed class TareaRepositorio(
     {
         try
         {
-            await using var context = await contextFactory.CreateDbContextAsync(cancellationToken);
-            return await context.Paneles
-                .AsNoTracking()
-                .AnyAsync(panel => panel.Id == panelId, cancellationToken);
+            return await paneles.ExisteAsync(panelId, cancellationToken);
         }
         catch (MySqlException exception)
         {

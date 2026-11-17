@@ -1,3 +1,4 @@
+using SolarUy.Backend.Modulos.Tareas.Interfaz.Apis.Local.Contratos;
 using SolarUy.Backend.Modulos.Parques.Aplicacion.Contratos;
 using SolarUy.Backend.Modulos.Parques.Aplicacion.DTOs;
 using SolarUy.Backend.Modulos.Parques.Aplicacion.Excepciones;
@@ -206,37 +207,28 @@ public sealed class PanelServiceTests
         public Task<bool> EsAdministradorAsync() => Task.FromResult(administrador);
     }
 
-    private sealed class TareasFalsas : ITareasService
+    private sealed class TareasFalsas : ITareasLocales
     {
         public List<(int PanelId, EstadoPanel Estado)> TareasAutomaticas { get; } = [];
         public TipoMantenimiento UltimoTipoMantenimiento { get; private set; }
 
-        public Task<IReadOnlyList<TareaDto>> ObtenerTodasAsync(
+        public Task<IReadOnlyList<TareaConsultaDto>> ObtenerTodasAsync(
             CancellationToken cancellationToken = default) =>
-            Task.FromResult<IReadOnlyList<TareaDto>>([]);
+            Task.FromResult<IReadOnlyList<TareaConsultaDto>>([]);
 
-        public Task<TareaDto> CrearAsync(
-            CrearTareaDto solicitud,
-            CancellationToken cancellationToken = default) =>
-            throw new NotImplementedException();
 
-        public Task<TareaDto?> CrearAutomaticaAsync(
+        public Task CrearAutomaticaAsync(
             int panelId,
-            EstadoPanel estadoPanel,
+            string estadoPanel,
             CancellationToken cancellationToken = default)
         {
-            TareasAutomaticas.Add((panelId, estadoPanel));
-            UltimoTipoMantenimiento = estadoPanel == EstadoPanel.Intermedio
+            TareasAutomaticas.Add((panelId, Enum.Parse<EstadoPanel>(estadoPanel)));
+            UltimoTipoMantenimiento = estadoPanel == nameof(EstadoPanel.Intermedio)
                 ? TipoMantenimiento.Limpieza
                 : TipoMantenimiento.Reparacion;
-            return Task.FromResult<TareaDto?>(null);
+            return Task.CompletedTask;
         }
 
-        public Task<TareaDto> CompletarAsync(
-            int id,
-            CompletarTareaDto solicitud,
-            CancellationToken cancellationToken = default) =>
-            throw new NotImplementedException();
     }
 
     private sealed class RepositorioFalso : IPanelRepositorio

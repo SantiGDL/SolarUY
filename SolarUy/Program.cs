@@ -12,7 +12,7 @@ using SolarUy.Backend.Modulos.Consultas.Aplicacion.Contratos;
 using SolarUy.Backend.Modulos.Consultas.Aplicacion.Implementaciones;
 using SolarUy.Backend.Modulos.Consultas.Infraestructura.IA;
 using SolarUy.Backend.Modulos.Mediciones.Aplicacion.Implementaciones;
-using SolarUy.Backend.Modulos.Mediciones.Dominio.Historial;
+using SolarUy.Backend.Modulos.Consultas.Aplicacion.DTOs;
 using SolarUy.Backend.Modulos.Mediciones.Dominio.Repositorios;
 using SolarUy.Backend.Modulos.Mediciones.Infraestructura.Persistencia;
 using SolarUy.Backend.Modulos.Mediciones.Infraestructura.Repositorios;
@@ -101,7 +101,13 @@ builder.Services.AddScoped<IParquesService, ParquesService>();
 builder.Services.AddScoped<INodosService, NodosService>();
 builder.Services.AddScoped<IPanelesService, PanelService>();
 builder.Services.AddScoped<ITareasService, TareasService>();
-builder.Services.AddScoped<IUsuarioActual, UsuarioActual>();
+builder.Services.AddScoped<UsuarioActual>();
+builder.Services.AddScoped<IUsuarioActual>(sp => sp.GetRequiredService<UsuarioActual>());
+builder.Services.AddScoped<IAccesoTareas>(sp => sp.GetRequiredService<UsuarioActual>());
+builder.Services.AddScoped<SolarUy.Backend.Modulos.Tareas.Interfaz.Apis.Local.Contratos.ITareasLocales,
+    SolarUy.Backend.Modulos.Tareas.Interfaz.Apis.Local.Implementaciones.TareasLocalService>();
+builder.Services.AddScoped<SolarUy.Backend.Modulos.Parques.Interfaz.Apis.Local.Contratos.IConsultaPaneles,
+    SolarUy.Backend.Modulos.Parques.Interfaz.Apis.Local.Implementaciones.ConsultaPanelesService>();
 builder.Services.AddDbContextFactory<MedicionesDbContext>(options =>
     options.UseMySQL(connectionString, mysql => mysql.MigrationsHistoryTable("__MedicionesMigrationsHistory")));
 builder.Services.AddScoped<IMedicionRepository, MedicionRepository>();
@@ -110,6 +116,8 @@ builder.Services.AddScoped<MedicionesService>();
 builder.Services.AddScoped<ICatalogoHistorial, CatalogoHistorialService>();
 builder.Services.AddScoped<SolarUy.Backend.Modulos.Mediciones.Aplicacion.Contratos.IAccesoHistorial, AccesoHistorialActual>();
 builder.Services.AddScoped<HistorialMedicionesService>();
+builder.Services.AddScoped<SolarUy.Backend.Modulos.Mediciones.Interfaz.Apis.Local.Contratos.IHistorialMediciones,
+    SolarUy.Backend.Modulos.Mediciones.Interfaz.Apis.Local.Implementaciones.HistorialMedicionesLocalService>();
 builder.Services.AddScoped<ConsultaNaturalService>();
 builder.Services.AddHttpClient<IProveedorConsultaIA, ProveedorConsultaLocal>((_, client) =>
 {

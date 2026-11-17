@@ -297,7 +297,7 @@
         {
             mensajeError = exception.Message;
         }
-        catch (AccesoNoAutorizadoException exception)
+        catch (Exception exception) when (exception is AccesoNoAutorizadoException or UnauthorizedAccessException)
         {
             mensajeError = exception.Message;
         }
@@ -375,7 +375,7 @@
         {
             mensajeError = exception.Message;
         }
-        catch (AccesoNoAutorizadoException exception)
+        catch (Exception exception) when (exception is AccesoNoAutorizadoException or UnauthorizedAccessException)
         {
             mensajeError = exception.Message;
         }

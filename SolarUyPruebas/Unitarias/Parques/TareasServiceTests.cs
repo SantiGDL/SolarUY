@@ -77,7 +77,7 @@ public sealed class TareasServiceTests
         repositorio.AgregarParaPrueba(CrearTarea(), 1);
         var servicio = CrearServicio(repositorio, administrador: false);
 
-        await Assert.ThrowsAsync<AccesoNoAutorizadoException>(() => servicio.ObtenerTodasAsync());
+        await Assert.ThrowsAsync<UnauthorizedAccessException>(() => servicio.ObtenerTodasAsync());
         Assert.False(repositorio.ListadoConsultado);
     }
 
@@ -87,7 +87,7 @@ public sealed class TareasServiceTests
         var repositorio = new RepositorioFalso();
         var sinPermiso = CrearServicio(repositorio, administrador: false);
 
-        await Assert.ThrowsAsync<AccesoNoAutorizadoException>(() =>
+        await Assert.ThrowsAsync<UnauthorizedAccessException>(() =>
             sinPermiso.CrearAsync(new CrearTareaDto
             {
                 PanelId = 4,
@@ -114,7 +114,7 @@ public sealed class TareasServiceTests
         var repositorio = new RepositorioFalso();
         var servicio = CrearServicio(repositorio, administrador: true);
 
-        var resultado = await servicio.CrearAutomaticaAsync(4, estado);
+        var resultado = await servicio.CrearAutomaticaAsync(4, estado.ToString());
 
         var tarea = Assert.Single(repositorio.Tareas.Values);
         Assert.Equal(tipoEsperado, tarea.TipoTarea);
@@ -128,7 +128,7 @@ public sealed class TareasServiceTests
         repositorio.AgregarParaPrueba(CrearTarea(), 1);
         var servicio = CrearServicio(repositorio, administrador: true);
 
-        var resultado = await servicio.CrearAutomaticaAsync(4, EstadoPanel.Intermedio);
+        var resultado = await servicio.CrearAutomaticaAsync(4, EstadoPanel.Intermedio.ToString());
 
         Assert.Null(resultado);
         Assert.Single(repositorio.Tareas);
@@ -141,7 +141,7 @@ public sealed class TareasServiceTests
         repositorio.AgregarParaPrueba(CrearTarea(), 1);
         var sinPermiso = CrearServicio(repositorio, administrador: false);
 
-        await Assert.ThrowsAsync<AccesoNoAutorizadoException>(() =>
+        await Assert.ThrowsAsync<UnauthorizedAccessException>(() =>
             sinPermiso.CompletarAsync(1, new CompletarTareaDto()));
         Assert.Equal(EstadoTarea.Pendiente, repositorio.Tareas[1].Estado);
 
@@ -166,7 +166,7 @@ public sealed class TareasServiceTests
         bool administrador) =>
         new(repositorio, new UsuarioFalso(administrador));
 
-    private sealed class UsuarioFalso(bool administrador) : IUsuarioActual
+    private sealed class UsuarioFalso(bool administrador) : IAccesoTareas
     {
         public Task<bool> EstaAutenticadoAsync() => Task.FromResult(administrador);
 

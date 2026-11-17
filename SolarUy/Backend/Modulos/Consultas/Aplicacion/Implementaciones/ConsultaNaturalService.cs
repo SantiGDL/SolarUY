@@ -1,21 +1,18 @@
+using SolarUy.Backend.Modulos.Tareas.Interfaz.Apis.Local.Contratos;
 using System.Text;
 using SolarUy.Backend.Modulos.Consultas.Aplicacion.Contratos;
 using SolarUy.Backend.Modulos.Consultas.Aplicacion.DTOs;
 using SolarUy.Backend.Modulos.Mediciones.Aplicacion.DTOs;
-using SolarUy.Backend.Modulos.Mediciones.Aplicacion.Implementaciones;
-using SolarUy.Backend.Modulos.Mediciones.Dominio.Historial;
+using SolarUy.Backend.Modulos.Mediciones.Interfaz.Apis.Local.Contratos;
 using SolarUy.Backend.Modulos.Parques.Interfaz.Apis.Local.Contratos;
-using SolarUy.Backend.Modulos.Tareas.Aplicacion.Contratos;
-using SolarUy.Backend.Modulos.Tareas.Aplicacion.DTOs;
-using SolarUy.Backend.Modulos.Tareas.Dominio.Enums;
 
 namespace SolarUy.Backend.Modulos.Consultas.Aplicacion.Implementaciones;
 
 public sealed class ConsultaNaturalService(
-    HistorialMedicionesService historial,
+    IHistorialMediciones historial,
     ICatalogoProduccion catalogoProduccion,
     IProveedorConsultaIA proveedor,
-    ITareasService tareasService,
+    ITareasLocales tareasService,
     ILogger<ConsultaNaturalService> logger)
 {
     public const int MaximoMensajes = 20;
@@ -48,8 +45,8 @@ public sealed class ConsultaNaturalService(
                 solicitudPdf.ParqueId.Value,
                 solicitudPdf.NodoId,
                 solicitudPdf.PanelId,
-                solicitudPdf.Periodo,
-                solicitudPdf.Modo,
+                solicitudPdf.Periodo.ToString(),
+                solicitudPdf.Modo.ToString(),
                 cancellationToken);
 
             if (queryPdf.Filas.Count == 0)
@@ -85,8 +82,8 @@ public sealed class ConsultaNaturalService(
             solicitud.ParqueId.Value,
             solicitud.NodoId,
             solicitud.PanelId,
-            solicitud.Periodo,
-            solicitud.Modo,
+            solicitud.Periodo.ToString(),
+            solicitud.Modo.ToString(),
             cancellationToken);
 
         var texto = FormatearResultado(query, solicitud);
@@ -143,7 +140,7 @@ public sealed class ConsultaNaturalService(
         return builder.ToString();
     }
 
-    public static string ResponderTareas(IReadOnlyList<TareaDto> tareas, string pregunta)
+    public static string ResponderTareas(IReadOnlyList<TareaConsultaDto> tareas, string pregunta)
     {
         if (tareas.Count == 0)
             return "No hay tareas registradas.";
@@ -155,8 +152,8 @@ public sealed class ConsultaNaturalService(
             .Where(tarea => !panelId.HasValue || tarea.PanelId == panelId.Value)
             .ToArray();
 
-        var pendientes = tareasFiltradas.Where(t => t.Estado == EstadoTarea.Pendiente).ToArray();
-        var completadas = tareasFiltradas.Where(t => t.Estado == EstadoTarea.Completada).ToArray();
+        var pendientes = tareasFiltradas.Where(t => t.Estado == "Pendiente").ToArray();
+        var completadas = tareasFiltradas.Where(t => t.Estado == "Completada").ToArray();
 
         if (texto.Contains("lista") || texto.Contains("listar") || texto.Contains("detalle") || texto.Contains("detalles") || texto.Contains("tipo") || texto.Contains("qué") || texto.Contains("que") || texto.Contains("ver"))
             return FormatearListadoTareas(tareasFiltradas, texto);
@@ -177,18 +174,18 @@ public sealed class ConsultaNaturalService(
         return $"Hay {tareasFiltradas.Length} tareas en total: {pendientes.Length} pendientes y {completadas.Length} completadas.";
     }
 
-    private static string FormatearListadoTareas(IReadOnlyList<TareaDto> tareas, string texto)
+    private static string FormatearListadoTareas(IReadOnlyList<TareaConsultaDto> tareas, string texto)
     {
         var tareasFiltradas = tareas
             .Where(tarea =>
             {
                 if (texto.Contains("pendiente") || texto.Contains("pendientes") || texto.Contains("abierta") || texto.Contains("abiertas"))
-                    return tarea.Estado == EstadoTarea.Pendiente;
+                    return tarea.Estado == "Pendiente";
                 if (texto.Contains("completada") || texto.Contains("completadas") || texto.Contains("finalizada") || texto.Contains("finalizadas"))
-                    return tarea.Estado == EstadoTarea.Completada;
+                    return tarea.Estado == "Completada";
                 return true;
             })
-            .OrderBy(tarea => tarea.Estado)
+            .OrderBy(tarea => tarea.Estado == "Completada" ? 1 : 0)
             .ThenByDescending(tarea => tarea.FechaCreada)
             .ToArray();
 
@@ -203,10 +200,10 @@ public sealed class ConsultaNaturalService(
         return $"Tareas disponibles: {detalle}.";
     }
 
-    private static string FormatearDetalleTarea(TareaDto tarea)
+    private static string FormatearDetalleTarea(TareaConsultaDto tarea)
     {
-        var estado = tarea.Estado == EstadoTarea.Completada ? "Completada" : "Pendiente";
-        var tipo = tarea.TipoTarea == TipoMantenimiento.Reparacion ? "Reparación" : "Limpieza";
+        var estado = tarea.Estado == "Completada" ? "Completada" : "Pendiente";
+        var tipo = tarea.TipoTarea == "Reparacion" ? "Reparación" : "Limpieza";
         var observaciones = string.IsNullOrWhiteSpace(tarea.Observaciones) ? "sin observaciones" : tarea.Observaciones;
         var fechaCreada = tarea.FechaCreada.ToString("dd/MM/yyyy", System.Globalization.CultureInfo.InvariantCulture);
         var fechaFinalizado = tarea.FechaFinalizado.HasValue ? $", cerrada {tarea.FechaFinalizado.Value:dd/MM/yyyy}" : string.Empty;
@@ -686,7 +683,7 @@ public sealed class ConsultaNaturalService(
         ModoHistorial modo,
         CancellationToken cancellationToken = default)
     {
-        var query = await historial.ConsultarAsync(parqueId, nodoId, panelId, periodo, modo, cancellationToken);
+        var query = await historial.ConsultarAsync(parqueId, nodoId, panelId, periodo.ToString(), modo.ToString(), cancellationToken);
         return FormatearResultado(query, new ConsultaNaturalRequest(
             $"Generación del parque {parqueId}",
             parqueId,
@@ -722,7 +719,7 @@ public sealed class ConsultaNaturalService(
         return "Opciones disponibles:\n" + string.Join(Environment.NewLine, grupos);
     }
 
-    private static string FormatearResultado(ResultadoHistorialDto query, ConsultaNaturalRequest solicitud)
+    private static string FormatearResultado(ResultadoHistorialLocalDto query, ConsultaNaturalRequest solicitud)
     {
         var seleccion = query.Seleccion;
         var periodo = query.Periodo;
@@ -736,8 +733,8 @@ public sealed class ConsultaNaturalService(
         var ultimo = filas.Last();
         var resumen = query.Consulta.Modo switch
         {
-            ModoHistorial.Promedio => $"El promedio observado fue {filas.Average(f => f.Valor):N2} W por panel.",
-            ModoHistorial.Crudos => $"Hay {total} registros crudos con valores entre {filas.Min(f => f.Valor):N2} W y {filas.Max(f => f.Valor):N2} W.",
+            nameof(ModoHistorial.Promedio) => $"El promedio observado fue {filas.Average(f => f.Valor):N2} W por panel.",
+            nameof(ModoHistorial.Crudos) => $"Hay {total} registros crudos con valores entre {filas.Min(f => f.Valor):N2} W y {filas.Max(f => f.Valor):N2} W.",
             _ => $"El valor más reciente es {ultimo.Valor:N2} W y la primera lectura del tramo fue {primer.Valor:N2} W."
         };
 

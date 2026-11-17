@@ -7,9 +7,11 @@ using SolarUy.Backend.Modulos.Consultas.Aplicacion.Implementaciones;
 using SolarUy.Backend.Modulos.Consultas.Infraestructura.IA;
 using SolarUy.Backend.Modulos.Mediciones.Aplicacion.DTOs;
 using SolarUy.Backend.Modulos.Mediciones.Dominio.Historial;
+using PeriodoHistorial = SolarUy.Backend.Modulos.Consultas.Aplicacion.DTOs.PeriodoHistorial;
+using ModoHistorial = SolarUy.Backend.Modulos.Consultas.Aplicacion.DTOs.ModoHistorial;
 using SolarUy.Backend.Modulos.Mediciones.Infraestructura.Exportacion;
 using SolarUy.Backend.Modulos.Parques.Interfaz.Apis.Local.Contratos;
-using SolarUy.Backend.Modulos.Tareas.Aplicacion.DTOs;
+using SolarUy.Backend.Modulos.Tareas.Interfaz.Apis.Local.Contratos;
 using SolarUy.Backend.Modulos.Tareas.Dominio.Enums;
 
 namespace SolarUyPruebas.Unitarias.Mediciones;
@@ -404,8 +406,8 @@ public sealed class ConsultaNaturalServiceTests
     {
         var tareas = new[]
         {
-            new TareaDto(1, 4, TipoMantenimiento.Limpieza, new DateTime(2026, 11, 12), null, EstadoTarea.Pendiente, string.Empty, null),
-            new TareaDto(2, 3, TipoMantenimiento.Reparacion, new DateTime(2026, 11, 11), null, EstadoTarea.Pendiente, string.Empty, null)
+            new TareaConsultaDto(1, 4, "Limpieza", new DateTime(2026, 11, 12), null, "Pendiente", string.Empty, null),
+            new TareaConsultaDto(2, 3, "Reparacion", new DateTime(2026, 11, 11), null, "Pendiente", string.Empty, null)
         };
 
         var respuestaPanel1 = ConsultaNaturalService.ResponderTareas(tareas, "Hay tareas pendientes para el panel 1?");
@@ -540,9 +542,9 @@ public sealed class ConsultaNaturalServiceTests
     {
         var tareas = new[]
         {
-            new TareaDto(1, 10, TipoMantenimiento.Limpieza, DateTime.UtcNow.AddDays(-2), null, EstadoTarea.Pendiente, "Limpieza", null),
-            new TareaDto(2, 11, TipoMantenimiento.Reparacion, DateTime.UtcNow.AddDays(-5), DateTime.UtcNow.AddDays(-4), EstadoTarea.Completada, "Reparación", null),
-            new TareaDto(3, 12, TipoMantenimiento.Limpieza, DateTime.UtcNow.AddDays(-1), null, EstadoTarea.Pendiente, "Limpieza", null)
+            new TareaConsultaDto(1, 10, "Limpieza", DateTime.UtcNow.AddDays(-2), null, "Pendiente", "Limpieza", null),
+            new TareaConsultaDto(2, 11, "Reparacion", DateTime.UtcNow.AddDays(-5), DateTime.UtcNow.AddDays(-4), "Completada", "Reparación", null),
+            new TareaConsultaDto(3, 12, "Limpieza", DateTime.UtcNow.AddDays(-1), null, "Pendiente", "Limpieza", null)
         };
 
         var respuesta = ConsultaNaturalService.ResponderTareas(tareas, "Cuantas tareas pendientes hay?");
@@ -556,8 +558,8 @@ public sealed class ConsultaNaturalServiceTests
     {
         var tareas = new[]
         {
-            new TareaDto(1, 10, TipoMantenimiento.Limpieza, new DateTime(2026, 1, 5), null, EstadoTarea.Pendiente, "Limpieza del panel", null),
-            new TareaDto(2, 11, TipoMantenimiento.Reparacion, new DateTime(2026, 1, 7), new DateTime(2026, 1, 9), EstadoTarea.Completada, "Revisión del inversor", null)
+            new TareaConsultaDto(1, 10, "Limpieza", new DateTime(2026, 1, 5), null, "Pendiente", "Limpieza del panel", null),
+            new TareaConsultaDto(2, 11, "Reparacion", new DateTime(2026, 1, 7), new DateTime(2026, 1, 9), "Completada", "Revisión del inversor", null)
         };
 
         var respuesta = ConsultaNaturalService.ResponderTareas(tareas, "dame la lista de tareas");
@@ -634,7 +636,7 @@ public sealed class ConsultaNaturalServiceTests
         Assert.Equal("historial", tipo.FaceName, ignoreCase: true);
         Assert.NotEmpty(fuente);
 
-        var consulta = new ConsultaHistorial(3, 5, 8, PeriodoHistorial.Todos, ModoHistorial.Diario, new DateTimeOffset(2026, 10, 15, 12, 0, 0, TimeSpan.Zero));
+        var consulta = new ConsultaHistorial(3, 5, 8, SolarUy.Backend.Modulos.Mediciones.Dominio.Historial.PeriodoHistorial.Todos, SolarUy.Backend.Modulos.Mediciones.Dominio.Historial.ModoHistorial.Diario, new DateTimeOffset(2026, 10, 15, 12, 0, 0, TimeSpan.Zero));
         var constructor = typeof(ResultadoHistorialDto).GetConstructor(
             BindingFlags.Instance | BindingFlags.NonPublic,
             binder: null,
