@@ -6,6 +6,7 @@
 
 @if (_sesionId != Guid.Empty)
 {
+    @* La página y el sensor arrancan por separado. El ID los vincula a la misma sesión. *@
     <Mediciones SesionId="_sesionId" @rendermode="@(new InteractiveServerRenderMode(prerender: false))" />
     <Sensor.Components.MotorSensor SesionId="_sesionId" @rendermode="@(new InteractiveWebAssemblyRenderMode(prerender: false))" />
 }

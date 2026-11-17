@@ -88,6 +88,7 @@ public sealed class MedicionRepository(IDbContextFactory<MedicionesDbContext> fa
         command.Parameters.Add(parametro);
     }
 
+    // Guardamos la entrega en un solo SaveChanges para confirmar el lote completo.
     public async Task AgregarEntregaAsync(IReadOnlyList<Medicion> mediciones, CancellationToken cancellationToken)
     {
         await using var context = await factory.CreateDbContextAsync(cancellationToken);

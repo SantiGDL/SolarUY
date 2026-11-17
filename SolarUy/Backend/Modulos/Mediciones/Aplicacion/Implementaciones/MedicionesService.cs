@@ -10,332 +10,360 @@ namespace SolarUy.Backend.Modulos.Mediciones.Aplicacion.Implementaciones;
 public sealed class MedicionesService(ICatalogoProduccion catalogo, IMedicionRepository mediciones,
     ISesionesProduccion sesiones, IControlMotor motor)
 {
-    private static void Autorizar(AccesoProduccion acceso)
+    private static void ValidarAcceso(AccesoProduccion acceso)
     {
         if (!acceso.EsAdministrador || string.IsNullOrWhiteSpace(acceso.Propietario))
             throw new ArgumentException("Producción requiere un administrador autenticado.");
     }
-    private SesionProduccion Obtener(AccesoProduccion acceso, Guid id)
+    private SesionProduccion ObtenerSesionAutorizada(AccesoProduccion acceso, Guid id)
     {
-        Autorizar(acceso);
-        var s = sesiones.Obtener(id);
-        if (s.Propietario != acceso.Propietario || s.Cerrada)
+        ValidarAcceso(acceso);
+        var sesion = sesiones.Obtener(id);
+        if (sesion.Propietario != acceso.Propietario || sesion.Cerrada)
             throw new ArgumentException("La sesión de Producción no pertenece al usuario.");
-        return s;
+        return sesion;
     }
     public Guid CrearSesion(AccesoProduccion acceso)
     {
-        Autorizar(acceso);
+        ValidarAcceso(acceso);
         return sesiones.Crear(acceso.Propietario).Id;
     }
-    public Task<IReadOnlyList<ParqueProduccion>> ObtenerCatalogoAsync(AccesoProduccion acceso, CancellationToken ct)
+    public Task<IReadOnlyList<ParqueProduccion>> ObtenerCatalogoAsync(AccesoProduccion acceso, CancellationToken cancelacion)
     {
-        Autorizar(acceso);
-        return catalogo.ObtenerAsync(acceso.EsAdministrador, ct);
+        ValidarAcceso(acceso);
+        return catalogo.ObtenerAsync(acceso.EsAdministrador, cancelacion);
     }
-    public ChannelReader<VistaProduccion> Observar(AccesoProduccion acceso, Guid id) => Obtener(acceso, id).Cambios.Reader;
+    public ChannelReader<VistaProduccion> Observar(AccesoProduccion acceso, Guid id) => ObtenerSesionAutorizada(acceso, id).Cambios.Reader;
 
-    private static void Publicar(SesionProduccion s)
+    private static void PublicarVista(SesionProduccion sesion)
     {
-        s.UltimaActividad = DateTimeOffset.UtcNow;
-        var config = s.Configuracion;
-        var paneles = s.Nodo?.Paneles.Select(p =>
+        sesion.UltimaActividad = DateTimeOffset.UtcNow;
+        var configuracion = sesion.Configuracion;
+        var paneles = sesion.Nodo?.Paneles.Select(panel =>
         {
-            var revision = config!.Paneles.First(x => x.Id == p.Id).RevisionEstado;
-            double? valor = p.Deshabilitado ? 0 : s.Actuales.TryGetValue(p.Id, out var l)
-                && l.RevisionEstado == revision ? l.ValorGenerado : null;
-            return new PanelActual(p, revision, valor);
+            var revision = configuracion!.Paneles.First(p => p.Id == panel.Id).RevisionEstado;
+            if (panel.Deshabilitado) return new PanelActual(panel, revision, 0);
+
+            // Una lectura previa al cambio de configuración ya no representa el estado actual.
+            if (sesion.Actuales.TryGetValue(panel.Id, out var lectura) && lectura.RevisionEstado == revision)
+                return new PanelActual(panel, revision, lectura.ValorGenerado);
+
+            return new PanelActual(panel, revision, null);
         }).ToArray() ?? [];
-        s.Cambios.Writer.TryWrite(new(config?.Version ?? 0, config?.ParqueId ?? 0, s.Nodo,
-            s.Conexion is not null, s.Confirmado, s.Pendiente, s.Estado, paneles, s.Muestras.ToArray()));
+        sesion.Cambios.Writer.TryWrite(new(configuracion?.Version ?? 0, configuracion?.ParqueId ?? 0, sesion.Nodo,
+            sesion.Conexion is not null, sesion.Confirmado, sesion.Pendiente, sesion.Estado, paneles, sesion.Muestras.ToArray()));
     }
 
-    public async Task ConfigurarAsync(AccesoProduccion acceso, Guid id, int parqueId, int nodoId, CancellationToken ct)
+    public async Task ConfigurarAsync(AccesoProduccion acceso, Guid id, int parqueId, int nodoId, CancellationToken cancelacion)
     {
-        var s = Obtener(acceso, id);
-        var nodoGate = sesiones.BloqueoNodo(nodoId);
-        await nodoGate.WaitAsync(ct);
+        var sesion = ObtenerSesionAutorizada(acceso, id);
+        var bloqueoNodo = sesiones.BloqueoNodo(nodoId);
+        // Tomamos el bloqueo del nodo antes que el de la sesión, igual que al guardar entregas.
+        await bloqueoNodo.WaitAsync(cancelacion);
         try
         {
-            var parques = await ObtenerCatalogoAsync(acceso, ct);
+            var parques = await ObtenerCatalogoAsync(acceso, cancelacion);
             var nodo = parques.FirstOrDefault(p => p.Id == parqueId)?.Nodos.FirstOrDefault(n => n.Id == nodoId)
                 ?? throw new ArgumentException("El nodo seleccionado no tiene paneles o ya no existe.");
-            await s.Exclusividad.WaitAsync(ct);
+            await sesion.Exclusividad.WaitAsync(cancelacion);
             try
             {
-                if (s.Cerrada) return;
-                if (s.Configuracion?.ParqueId != parqueId || s.Configuracion.NodoId != nodoId)
+                if (sesion.Cerrada) return;
+                if (sesion.Configuracion?.ParqueId != parqueId || sesion.Configuracion.NodoId != nodoId)
                 {
-                    s.Configuracion = new(id, ++s.UltimaVersion, parqueId, nodoId,
+                    sesion.Configuracion = new(id, ++sesion.UltimaVersion, parqueId, nodoId,
                         nodo.Paneles.Select(p => new PanelMotor(p.Id, p.PotenciaActual, p.Deshabilitado, 1)).ToArray());
-                    s.Nodo = nodo;
-                    s.Confirmado = false;
-                    s.Muestras.Clear();
-                    s.Actuales.Clear();
-                    s.RevisionesConfirmadas.Clear();
-                    s.EntregasGuardadas.Clear();
+                    sesion.Nodo = nodo;
+                    sesion.Confirmado = false;
+                    // Limpiamos los datos del nodo anterior antes de publicar la nueva selección.
+                    LimpiarMedicionesDeLaSesion(sesion);
                 }
                 else
                 {
                     var paneles = nodo.Paneles.Select(p =>
                     {
-                        var previo = s.Configuracion.Paneles.FirstOrDefault(x => x.Id == p.Id);
-                        var revision = previo is null ? 1 : previo.RevisionEstado +
-                            (previo.PotenciaActual != p.PotenciaActual || previo.Deshabilitado != p.Deshabilitado ? 1 : 0);
+                        var panelAnterior = sesion.Configuracion.Paneles.FirstOrDefault(x => x.Id == p.Id);
+                        var revision = panelAnterior?.RevisionEstado ?? 1;
+                        if (panelAnterior is not null &&
+                            (panelAnterior.PotenciaActual != p.PotenciaActual || panelAnterior.Deshabilitado != p.Deshabilitado))
+                            revision++;
+
                         return new PanelMotor(p.Id, p.PotenciaActual, p.Deshabilitado, revision);
                     }).ToArray();
-                    s.Configuracion = s.Configuracion with { Paneles = paneles };
-                    s.Nodo = nodo;
+                    sesion.Configuracion = sesion.Configuracion with { Paneles = paneles };
+                    sesion.Nodo = nodo;
                 }
-                await EnviarConfiguracionAsync(s, ct);
+                await EnviarConfiguracionAsync(sesion, cancelacion);
             }
-            finally { s.Exclusividad.Release(); }
+            finally { sesion.Exclusividad.Release(); }
         }
-        finally { nodoGate.Release(); }
+        finally { bloqueoNodo.Release(); }
     }
-    private async Task EnviarConfiguracionAsync(SesionProduccion s, CancellationToken ct)
+    // Restablece la vista y el seguimiento de entregas al dejar una selección.
+    private static void LimpiarMedicionesDeLaSesion(SesionProduccion sesion)
     {
-        if (s.Configuracion is null || s.Conexion is null)
+        sesion.Muestras.Clear();
+        sesion.Actuales.Clear();
+        sesion.RevisionesConfirmadas.Clear();
+        sesion.EntregasGuardadas.Clear();
+    }
+
+    // La página puede elegir un nodo antes de que el sensor se conecte.
+    private async Task EnviarConfiguracionAsync(SesionProduccion sesion, CancellationToken cancelacion)
+    {
+        if (sesion.Configuracion is null || sesion.Conexion is null)
         {
-            s.Estado = "Esperando el motor WebAssembly…";
-            Publicar(s);
+            sesion.Estado = "Esperando el motor WebAssembly…";
+            PublicarVista(sesion);
             return;
         }
         try
         {
-            s.Pendiente = !s.Confirmado || s.Pendiente;
-            await motor.ConfigurarAsync(s.Conexion, s.Configuracion, ct);
-            s.Estado = s.Confirmado ? "Motor conectado" : "Esperando confirmación del motor…";
+            sesion.Pendiente = !sesion.Confirmado || sesion.Pendiente;
+            await motor.ConfigurarAsync(sesion.Conexion, sesion.Configuracion, cancelacion);
+            sesion.Estado = sesion.Confirmado ? "Motor conectado" : "Esperando confirmación del motor…";
         }
-        catch (Exception) when (!ct.IsCancellationRequested)
+        catch (Exception) when (!cancelacion.IsCancellationRequested)
         {
-            s.Pendiente = true;
-            s.Estado = "Configuración pendiente de sincronización. Volvé a Conectar.";
+            sesion.Pendiente = true;
+            sesion.Estado = "Configuración pendiente de sincronización. Volvé a Conectar.";
         }
-        Publicar(s);
+        PublicarVista(sesion);
     }
 
-    public async Task VaciarSeleccionAsync(AccesoProduccion acceso, Guid id, CancellationToken ct)
+    public async Task VaciarSeleccionAsync(AccesoProduccion acceso, Guid id, CancellationToken cancelacion)
     {
-        var s = Obtener(acceso, id);
-        await s.Exclusividad.WaitAsync(ct);
+        var sesion = ObtenerSesionAutorizada(acceso, id);
+        await sesion.Exclusividad.WaitAsync(cancelacion);
         try
         {
-            s.Configuracion = null;
-            s.Nodo = null;
-            s.Confirmado = false;
-            s.Pendiente = false;
-            s.Muestras.Clear();
-            s.Actuales.Clear();
-            s.RevisionesConfirmadas.Clear();
-            s.EntregasGuardadas.Clear();
-            if (s.Conexion is not null) await motor.DetenerAsync(s.Conexion, id, ct);
-            s.Estado = "No hay nodos con paneles disponibles";
-            Publicar(s);
+            sesion.Configuracion = null;
+            sesion.Nodo = null;
+            sesion.Confirmado = false;
+            sesion.Pendiente = false;
+            LimpiarMedicionesDeLaSesion(sesion);
+            if (sesion.Conexion is not null) await motor.DetenerAsync(sesion.Conexion, id, cancelacion);
+            sesion.Estado = "No hay nodos con paneles disponibles";
+            PublicarVista(sesion);
         }
-        finally { s.Exclusividad.Release(); }
+        finally { sesion.Exclusividad.Release(); }
     }
 
-    public async Task RegistrarSensorAsync(AccesoProduccion acceso, Guid id, string conexion, CancellationToken ct)
+    public async Task RegistrarSensorAsync(AccesoProduccion acceso, Guid id, string conexion, CancellationToken cancelacion)
     {
-        var s = Obtener(acceso, id);
-        await s.Exclusividad.WaitAsync(ct);
+        var sesion = ObtenerSesionAutorizada(acceso, id);
+        await sesion.Exclusividad.WaitAsync(cancelacion);
         try
         {
-            if (s.Cerrada) return;
-            if (s.Conexion is not null && s.Conexion != conexion)
+            if (sesion.Cerrada) return;
+            if (sesion.Conexion is not null && sesion.Conexion != conexion)
                 throw new ArgumentException("La sesión ya tiene un motor conectado.");
-            s.Conexion = conexion;
-            s.Confirmado = false;
-            await EnviarConfiguracionAsync(s, ct);
+            sesion.Conexion = conexion;
+            sesion.Confirmado = false;
+            // El sensor recibe la selección vigente aunque se haya configurado antes de conectar.
+            await EnviarConfiguracionAsync(sesion, cancelacion);
         }
-        finally { s.Exclusividad.Release(); }
+        finally { sesion.Exclusividad.Release(); }
     }
 
     public async Task ConfirmarAsync(AccesoProduccion acceso, Guid id, string conexion,
-        long version, PanelMotor[] estados, CancellationToken ct)
+        long version, PanelMotor[] estados, CancellationToken cancelacion)
     {
-        var s = Obtener(acceso, id);
-        await s.Exclusividad.WaitAsync(ct);
+        var sesion = ObtenerSesionAutorizada(acceso, id);
+        await sesion.Exclusividad.WaitAsync(cancelacion);
         try
         {
-            if (s.Conexion != conexion || s.Configuracion?.Version != version) return;
-            var vigente = s.Configuracion.Paneles;
+            // Una confirmación atrasada no habilita entregas para la selección actual.
+            if (sesion.Conexion != conexion || sesion.Configuracion?.Version != version) return;
+            var vigente = sesion.Configuracion.Paneles;
             if (estados.Length != vigente.Length || vigente.Any(p => !estados.Contains(p))) return;
-            s.Confirmado = true;
-            foreach (var panel in vigente) s.RevisionesConfirmadas[panel.Id] = panel.RevisionEstado;
-            s.Pendiente = false;
-            s.Estado = "Motor conectado · esperando próxima entrega";
-            Publicar(s);
+            sesion.Confirmado = true;
+            foreach (var panel in vigente) sesion.RevisionesConfirmadas[panel.Id] = panel.RevisionEstado;
+            sesion.Pendiente = false;
+            sesion.Estado = "Motor conectado · esperando próxima entrega";
+            PublicarVista(sesion);
         }
-        finally { s.Exclusividad.Release(); }
+        finally { sesion.Exclusividad.Release(); }
     }
 
     public async Task CambiarHabilitacionAsync(AccesoProduccion acceso, Guid id, int panelId,
-        bool deshabilitado, CancellationToken ct)
+        bool deshabilitado, CancellationToken cancelacion)
     {
-        var origen = Obtener(acceso, id);
-        var config = origen.Configuracion ?? throw new ArgumentException("No hay un nodo conectado.");
-        var gate = sesiones.BloqueoNodo(config.NodoId);
-        await gate.WaitAsync(ct);
+        var origen = ObtenerSesionAutorizada(acceso, id);
+        var configuracion = origen.Configuracion ?? throw new ArgumentException("No hay un nodo conectado.");
+        var bloqueoNodo = sesiones.BloqueoNodo(configuracion.NodoId);
+        await bloqueoNodo.WaitAsync(cancelacion);
         try
         {
-            if (origen.Configuracion?.Version != config.Version)
+            if (origen.Configuracion?.Version != configuracion.Version)
                 throw new ArgumentException("La selección cambió. Volvé a intentar.");
-            await catalogo.CambiarHabilitacionAsync(acceso.EsAdministrador, config.ParqueId,
-                config.NodoId, panelId, deshabilitado, ct);
-            // El flag ya está persistido. Un fallo de transporte no lo revierte.
-            foreach (var s in sesiones.Listar())
+            await catalogo.CambiarHabilitacionAsync(acceso.EsAdministrador, configuracion.ParqueId,
+                configuracion.NodoId, panelId, deshabilitado, cancelacion);
+            // Terminamos de reflejar el cambio guardado aunque se cierre la página que lo solicitó.
+            foreach (var sesion in sesiones.Listar())
             {
-                await s.Exclusividad.WaitAsync(CancellationToken.None);
+                await sesion.Exclusividad.WaitAsync(CancellationToken.None);
                 try
                 {
-                    if (s.Cerrada || s.Configuracion?.NodoId != config.NodoId || s.Nodo is null) continue;
-                    var anterior = s.Configuracion.Paneles.FirstOrDefault(p => p.Id == panelId);
+                    if (sesion.Cerrada || sesion.Configuracion?.NodoId != configuracion.NodoId || sesion.Nodo is null) continue;
+                    var anterior = sesion.Configuracion.Paneles.FirstOrDefault(p => p.Id == panelId);
                     if (anterior is null) continue;
                     var nuevo = anterior.Deshabilitado == deshabilitado ? anterior :
                         anterior with { Deshabilitado = deshabilitado, RevisionEstado = anterior.RevisionEstado + 1 };
-                    s.Configuracion = s.Configuracion with { Paneles = s.Configuracion.Paneles
+                    sesion.Configuracion = sesion.Configuracion with { Paneles = sesion.Configuracion.Paneles
                         .Select(p => p.Id == panelId ? nuevo : p).ToArray() };
-                    s.Nodo = s.Nodo with { Paneles = s.Nodo.Paneles.Select(p => p.Id == panelId
+                    sesion.Nodo = sesion.Nodo with { Paneles = sesion.Nodo.Paneles.Select(p => p.Id == panelId
                         ? p with { Deshabilitado = deshabilitado } : p).ToArray() };
-                    if (nuevo != anterior) s.Actuales.Remove(panelId);
-                    s.Pendiente = true;
-                    s.Estado = "Estado guardado · sincronización pendiente";
-                    if (s.Conexion is not null)
+                    if (nuevo != anterior) sesion.Actuales.Remove(panelId);
+                    sesion.Pendiente = true;
+                    sesion.Estado = "Estado guardado · sincronización pendiente";
+                    if (sesion.Conexion is not null)
                     {
                         try
                         {
-                            await motor.CambiarHabilitacionAsync(s.Conexion, new(s.Id, s.Configuracion.Version,
+                            await motor.CambiarHabilitacionAsync(sesion.Conexion, new(sesion.Id, sesion.Configuracion.Version,
                                 panelId, deshabilitado, nuevo.RevisionEstado), CancellationToken.None);
                         }
                         catch (Exception) { /* Se reenvía el estado autoritativo al reconectar. */ }
                     }
-                    Publicar(s);
+                    PublicarVista(sesion);
                 }
-                finally { s.Exclusividad.Release(); }
+                finally { sesion.Exclusividad.Release(); }
             }
         }
-        finally { gate.Release(); }
+        finally { bloqueoNodo.Release(); }
     }
 
-    public async Task RegistrarEntregaAsync(AccesoProduccion acceso, string conexion, EntregaMotor entrega, CancellationToken ct)
+    public async Task RegistrarEntregaAsync(AccesoProduccion acceso, string conexion, EntregaMotor entrega, CancellationToken cancelacion)
     {
-        var s = Obtener(acceso, entrega.SesionId);
-        var gate = sesiones.BloqueoNodo(entrega.NodoId);
-        await gate.WaitAsync(ct);
+        var sesion = ObtenerSesionAutorizada(acceso, entrega.SesionId);
+        var bloqueoNodo = sesiones.BloqueoNodo(entrega.NodoId);
+        await bloqueoNodo.WaitAsync(cancelacion);
         try
         {
-            await s.Exclusividad.WaitAsync(ct);
+            await sesion.Exclusividad.WaitAsync(cancelacion);
             try
             {
-                var config = s.Configuracion;
+                var configuracion = sesion.Configuracion;
                 if (entrega.EntregaId == Guid.Empty) throw new ArgumentException("La entrega requiere un identificador.");
-                if (s.Cerrada || s.Conexion != conexion || config is null || !s.Confirmado ||
-                    config.Version != entrega.Version || config.ParqueId != entrega.ParqueId || config.NodoId != entrega.NodoId)
+                if (sesion.Cerrada || sesion.Conexion != conexion || configuracion is null || !sesion.Confirmado ||
+                    configuracion.Version != entrega.Version || configuracion.ParqueId != entrega.ParqueId || configuracion.NodoId != entrega.NodoId)
                     throw new ArgumentException("La entrega no corresponde a la conexión y configuración vigentes.");
-                if (s.EntregasGuardadas.Contains(entrega.EntregaId)) return;
+                // Una entrega que ya se guardó no vuelve a sumar muestras.
+                if (sesion.EntregasGuardadas.Contains(entrega.EntregaId)) return;
                 if (entrega.Lecturas is null || entrega.Lecturas.Length == 0 || entrega.Lecturas.Any(l => l is null) ||
                     entrega.Lecturas.Select(l => l.PanelId).Distinct().Count() != entrega.Lecturas.Length)
                     throw new ArgumentException("La entrega no es válida.");
-                var actual = (await catalogo.ObtenerAsync(acceso.EsAdministrador, ct))
-                    .FirstOrDefault(p => p.Id == config.ParqueId)?.Nodos.FirstOrDefault(n => n.Id == config.NodoId)
+                var actual = (await catalogo.ObtenerAsync(acceso.EsAdministrador, cancelacion))
+                    .FirstOrDefault(p => p.Id == configuracion.ParqueId)?.Nodos.FirstOrDefault(n => n.Id == configuracion.NodoId)
                     ?? throw new ArgumentException("El nodo ya no existe.");
-                var validas = new List<LecturaMotor>();
-                foreach (var l in entrega.Lecturas)
-                {
-                    var panel = actual.Paneles.FirstOrDefault(p => p.Id == l.PanelId);
-                    var estado = config.Paneles.FirstOrDefault(p => p.Id == l.PanelId);
-                    if (panel is null || estado is null) throw new ArgumentException("Panel ajeno a la selección.");
-                    if (panel.Deshabilitado || estado.Deshabilitado || l.RevisionEstado != estado.RevisionEstado) continue;
-                    if (!double.IsFinite(l.ValorGenerado) || l.ValorGenerado < 0 || l.ValorGenerado > panel.PotenciaActual ||
-                        l.FechaHora == default || l.FechaHora > DateTimeOffset.UtcNow.AddSeconds(30))
-                        throw new ArgumentException("Valor o fecha de medición inválidos.");
-                    if (s.Actuales.TryGetValue(l.PanelId, out var ultima) && l.FechaHora <= ultima.FechaHora)
-                        throw new ArgumentException("La lectura ya fue recibida o está fuera de orden.");
-                    validas.Add(l with { FechaHora = l.FechaHora.ToUniversalTime() });
-                }
-                foreach (var p in config.Paneles.Where(p => !p.Deshabilitado &&
+                var validas = ValidarLecturas(entrega.Lecturas, sesion, configuracion, actual);
+                foreach (var p in configuracion.Paneles.Where(p => !p.Deshabilitado &&
                     actual.Paneles.Any(a => a.Id == p.Id && !a.Deshabilitado)))
                 {
                     // Puede haber una revisión anterior en tránsito: se omite solo ese panel.
                     if (!entrega.Lecturas.Any(l => l.PanelId == p.Id) &&
-                        s.RevisionesConfirmadas.GetValueOrDefault(p.Id) == p.RevisionEstado)
+                        sesion.RevisionesConfirmadas.GetValueOrDefault(p.Id) == p.RevisionEstado)
                     {
-                        s.Pendiente = true;
-                        await EnviarConfiguracionAsync(s, ct);
+                        sesion.Pendiente = true;
+                        await EnviarConfiguracionAsync(sesion, cancelacion);
                         throw new ArgumentException("Faltan lecturas de paneles habilitados.");
                     }
                 }
                 if (validas.Count == 0) return;
-                await mediciones.AgregarEntregaAsync(validas.Select(l => Medicion.Crear(config.ParqueId,
-                    config.NodoId, l.PanelId, l.ValorGenerado, l.FechaHora)).ToArray(), ct);
-                foreach (var l in validas) s.Actuales[l.PanelId] = l;
-                s.EntregasGuardadas.Add(entrega.EntregaId);
-                s.Muestras.Add(new(validas[0].FechaHora, validas.ToArray()));
-                s.Estado = "Entrega guardada";
-                Publicar(s);
+                // La vista solo muestra mediciones cuyo guardado terminó correctamente.
+                await mediciones.AgregarEntregaAsync(validas.Select(l => Medicion.Crear(configuracion.ParqueId,
+                    configuracion.NodoId, l.PanelId, l.ValorGenerado, l.FechaHora)).ToArray(), cancelacion);
+                foreach (var l in validas) sesion.Actuales[l.PanelId] = l;
+                sesion.EntregasGuardadas.Add(entrega.EntregaId);
+                sesion.Muestras.Add(new(validas[0].FechaHora, validas.ToArray()));
+                sesion.Estado = "Entrega guardada";
+                PublicarVista(sesion);
             }
             catch
             {
-                s.Estado = "No se confirmó el guardado de la entrega";
-                Publicar(s);
+                sesion.Estado = "No se confirmó el guardado de la entrega";
+                PublicarVista(sesion);
                 throw;
             }
-            finally { s.Exclusividad.Release(); }
+            finally { sesion.Exclusividad.Release(); }
         }
-        finally { gate.Release(); }
+        finally { bloqueoNodo.Release(); }
+    }
+
+    private static List<LecturaMotor> ValidarLecturas(LecturaMotor[] lecturas, SesionProduccion sesion,
+        ConfiguracionMotor configuracion, NodoProduccion nodoActual)
+    {
+        var lecturasValidas = new List<LecturaMotor>();
+        foreach (var lectura in lecturas)
+        {
+            var panel = nodoActual.Paneles.FirstOrDefault(p => p.Id == lectura.PanelId);
+            var panelConfigurado = configuracion.Paneles.FirstOrDefault(p => p.Id == lectura.PanelId);
+            if (panel is null || panelConfigurado is null) throw new ArgumentException("Panel ajeno a la selección.");
+            // Un panel puede haberse deshabilitado mientras la entrega estaba en tránsito.
+            if (panel.Deshabilitado || panelConfigurado.Deshabilitado || lectura.RevisionEstado != panelConfigurado.RevisionEstado) continue;
+            var valorInvalido = !double.IsFinite(lectura.ValorGenerado) ||
+                lectura.ValorGenerado < 0 || lectura.ValorGenerado > panel.PotenciaActual;
+            if (valorInvalido || lectura.FechaHora == default || lectura.FechaHora > DateTimeOffset.UtcNow.AddSeconds(30))
+                throw new ArgumentException("Valor o fecha de medición inválidos.");
+            if (sesion.Actuales.TryGetValue(lectura.PanelId, out var ultima) && lectura.FechaHora <= ultima.FechaHora)
+                throw new ArgumentException("La lectura ya fue recibida o está fuera de orden.");
+            lecturasValidas.Add(lectura with { FechaHora = lectura.FechaHora.ToUniversalTime() });
+        }
+        return lecturasValidas;
     }
 
     public async Task DesconectarAsync(string conexion)
     {
-        foreach (var s in sesiones.Listar())
+        foreach (var sesion in sesiones.Listar())
         {
-            await s.Exclusividad.WaitAsync();
+            await sesion.Exclusividad.WaitAsync();
             try
             {
-                if (s.Conexion != conexion) continue;
-                s.Conexion = null;
-                s.Confirmado = false;
-                s.Estado = "Motor desconectado · esperando reconexión";
-                Publicar(s);
+                if (sesion.Conexion != conexion) continue;
+                // Conservamos la selección para enviársela al sensor cuando vuelva a registrarse.
+                sesion.Conexion = null;
+                sesion.Confirmado = false;
+                sesion.Estado = "Motor desconectado · esperando reconexión";
+                PublicarVista(sesion);
             }
-            finally { s.Exclusividad.Release(); }
+            finally { sesion.Exclusividad.Release(); }
         }
     }
-    public async Task LatidoAsync(AccesoProduccion acceso, Guid id, string conexion, CancellationToken ct)
+    public async Task LatidoAsync(AccesoProduccion acceso, Guid id, string conexion, CancellationToken cancelacion)
     {
-        var s = Obtener(acceso, id);
-        await s.Exclusividad.WaitAsync(ct);
+        var sesion = ObtenerSesionAutorizada(acceso, id);
+        await sesion.Exclusividad.WaitAsync(cancelacion);
         try
         {
-            if (s.Conexion != conexion) throw new ArgumentException("El motor no corresponde a la sesión.");
-            s.UltimaActividad = DateTimeOffset.UtcNow;
+            if (sesion.Conexion != conexion) throw new ArgumentException("El motor no corresponde a la sesión.");
+            sesion.UltimaActividad = DateTimeOffset.UtcNow;
         }
-        finally { s.Exclusividad.Release(); }
+        finally { sesion.Exclusividad.Release(); }
     }
     public async Task ExpirarSesionesAsync()
     {
-        foreach (var s in sesiones.Listar())
+        foreach (var sesion in sesiones.Listar())
         {
-            if (s.UltimaActividad < DateTimeOffset.UtcNow.AddMinutes(-2))
-                await CerrarAsync(new(s.Propietario, true), s.Id, soloInactiva: true);
+            if (sesion.UltimaActividad < DateTimeOffset.UtcNow.AddMinutes(-2))
+                await CerrarAsync(new(sesion.Propietario, true), sesion.Id, soloInactiva: true);
         }
     }
     public async Task CerrarAsync(AccesoProduccion acceso, Guid id, bool soloInactiva = false)
     {
-        SesionProduccion s;
-        try { s = Obtener(acceso, id); } catch (ArgumentException) { return; }
-        await s.Exclusividad.WaitAsync();
+        SesionProduccion sesion;
+        try { sesion = ObtenerSesionAutorizada(acceso, id); } catch (ArgumentException) { return; }
+        await sesion.Exclusividad.WaitAsync();
         try
         {
-            if (soloInactiva && s.UltimaActividad >= DateTimeOffset.UtcNow.AddMinutes(-2)) return;
-            s.Cerrada = true;
-            s.Cambios.Writer.TryComplete();
-            if (s.Conexion is not null)
-                try { await motor.DetenerAsync(s.Conexion, id, CancellationToken.None); } catch (Exception) { }
+            // Puede haber llegado un latido mientras la limpieza esperaba su turno.
+            if (soloInactiva && sesion.UltimaActividad >= DateTimeOffset.UtcNow.AddMinutes(-2)) return;
+            sesion.Cerrada = true;
+            sesion.Cambios.Writer.TryComplete();
+            if (sesion.Conexion is not null)
+                try { await motor.DetenerAsync(sesion.Conexion, id, CancellationToken.None); } catch (Exception) { }
             sesiones.Retirar(id);
         }
-        finally { s.Exclusividad.Release(); }
+        finally { sesion.Exclusividad.Release(); }
     }
 }

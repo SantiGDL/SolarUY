@@ -36,6 +36,7 @@ public sealed class SesionProduccion(Guid id, string propietario)
     public Guid Id { get; } = id;
     public string Propietario { get; } = propietario;
     public SemaphoreSlim Exclusividad { get; } = new(1, 1);
+    // Cada vista incluye las muestras acumuladas. Si la página se atrasa, alcanza con la más reciente.
     public Channel<VistaProduccion> Cambios { get; } = Channel.CreateBounded<VistaProduccion>(
         new BoundedChannelOptions(1) { FullMode = BoundedChannelFullMode.DropOldest });
     public string? Conexion { get; set; }
@@ -49,6 +50,7 @@ public sealed class SesionProduccion(Guid id, string propietario)
     public string Estado { get; set; } = "Esperando el motor WebAssembly…";
     public List<MuestraProduccion> Muestras { get; } = [];
     public Dictionary<int, LecturaMotor> Actuales { get; } = [];
+    // La revisión confirmada indica desde cuándo es obligatorio recibir lecturas de cada panel.
     public Dictionary<int, long> RevisionesConfirmadas { get; } = [];
     public HashSet<Guid> EntregasGuardadas { get; } = [];
 }

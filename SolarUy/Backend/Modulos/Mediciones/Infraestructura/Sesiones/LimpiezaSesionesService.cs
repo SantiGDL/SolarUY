@@ -14,6 +14,7 @@ public sealed class LimpiezaSesionesService(IServiceScopeFactory scopes,
             {
                 try
                 {
+                    // Creamos un alcance por pasada para resolver el servicio de Mediciones.
                     await using var scope = scopes.CreateAsyncScope();
                     await scope.ServiceProvider.GetRequiredService<MedicionesService>().ExpirarSesionesAsync();
                 }

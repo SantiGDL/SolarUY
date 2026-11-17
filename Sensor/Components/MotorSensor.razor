@@ -3,23 +3,25 @@
 
 @code {
     [Parameter] public Guid SesionId { get; set; }
-    private readonly CancellationTokenSource _vida = new();
-    private Task? _inicio;
+    private readonly CancellationTokenSource _cancelacionInicio = new();
+    private Task? _tareaInicio;
     protected override Task OnAfterRenderAsync(bool firstRender)
     {
-        if (firstRender) _inicio = IniciarAsync();
+        // El intento de conexión puede seguir después de que termine este render.
+        if (firstRender) _tareaInicio = ConectarSensorAsync();
         return Task.CompletedTask;
     }
-    private async Task IniciarAsync()
+    private async Task ConectarSensorAsync()
     {
-        try { await Cliente.IniciarAsync(SesionId, _vida.Token); }
-        catch (OperationCanceledException) when (_vida.IsCancellationRequested) { }
+        try { await Cliente.IniciarAsync(SesionId, _cancelacionInicio.Token); }
+        catch (OperationCanceledException) when (_cancelacionInicio.IsCancellationRequested) { }
     }
     public async ValueTask DisposeAsync()
     {
-        await _vida.CancelAsync();
-        if (_inicio is not null) await _inicio;
+        // Si la conexión todavía está arrancando, esperamos que salga antes de liberar el cliente.
+        await _cancelacionInicio.CancelAsync();
+        if (_tareaInicio is not null) await _tareaInicio;
         await Cliente.DisposeAsync();
-        _vida.Dispose();
+        _cancelacionInicio.Dispose();
     }
 }
