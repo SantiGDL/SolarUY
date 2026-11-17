@@ -1,6 +1,3 @@
-using SolarUy.Backend.Modulos.Parques.Aplicacion.Contratos;
-using SolarUy.Backend.Modulos.Parques.Aplicacion.Excepciones;
-using SolarUy.Backend.Modulos.Parques.Dominio.Enums;
 using SolarUy.Backend.Modulos.Tareas.Aplicacion.Contratos;
 using SolarUy.Backend.Modulos.Tareas.Aplicacion.DTOs;
 using SolarUy.Backend.Modulos.Tareas.Aplicacion.Excepciones;
@@ -11,7 +8,7 @@ namespace SolarUy.Backend.Modulos.Tareas.Aplicacion.Implementaciones;
 
 public sealed class TareasService(
     ITareaRepositorio repositorio,
-    IUsuarioActual usuarioActual) : ITareasService
+    IAccesoTareas usuarioActual) : ITareasService
 {
     public async Task<IReadOnlyList<TareaDto>> ObtenerTodasAsync(
         CancellationToken cancellationToken = default)
@@ -45,14 +42,14 @@ public sealed class TareasService(
 
     public async Task<TareaDto?> CrearAutomaticaAsync(
         int panelId,
-        EstadoPanel estadoPanel,
+        string estadoPanel,
         CancellationToken cancellationToken = default)
     {
         await ExigirAdministradorAsync();
         var tipoTarea = estadoPanel switch
         {
-            EstadoPanel.Intermedio => TipoMantenimiento.Limpieza,
-            EstadoPanel.Rotura => TipoMantenimiento.Reparacion,
+            "Intermedio" => TipoMantenimiento.Limpieza,
+            "Rotura" => TipoMantenimiento.Reparacion,
             _ => (TipoMantenimiento?)null
         };
 
@@ -118,7 +115,7 @@ public sealed class TareasService(
     {
         if (!await usuarioActual.EsAdministradorAsync())
         {
-            throw new AccesoNoAutorizadoException(
+            throw new UnauthorizedAccessException(
                 "Solo un usuario ADMIN puede administrar tareas.");
         }
     }

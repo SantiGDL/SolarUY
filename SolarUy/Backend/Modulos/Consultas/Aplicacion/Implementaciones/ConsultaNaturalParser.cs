@@ -3,7 +3,6 @@ using System.Text;
 using System.Text.RegularExpressions;
 using SolarUy.Backend.Modulos.Consultas.Aplicacion.DTOs;
 using SolarUy.Backend.Modulos.Mediciones.Aplicacion.DTOs;
-using SolarUy.Backend.Modulos.Mediciones.Dominio.Historial;
 
 namespace SolarUy.Backend.Modulos.Consultas.Aplicacion.Implementaciones;
 

@@ -2,7 +2,7 @@ using SolarUy.Backend.Modulos.Parques.Aplicacion.Contratos;
 using SolarUy.Backend.Modulos.Parques.Aplicacion.DTOs;
 using SolarUy.Backend.Modulos.Parques.Aplicacion.Excepciones;
 using SolarUy.Backend.Modulos.Parques.Dominio.Entidades;
-using SolarUy.Backend.Modulos.Tareas.Aplicacion.Contratos;
+using SolarUy.Backend.Modulos.Tareas.Interfaz.Apis.Local.Contratos;
 using SolarUy.Backend.Modulos.Parques.Dominio.Enums;
 
 namespace SolarUy.Backend.Modulos.Parques.Aplicacion.Implementaciones;
@@ -10,7 +10,7 @@ namespace SolarUy.Backend.Modulos.Parques.Aplicacion.Implementaciones;
 public sealed class PanelService(
     IPanelRepositorio repositorio,
     IUsuarioActual usuarioActual,
-    ITareasService tareasService) : IPanelesService
+    ITareasLocales tareasService) : IPanelesService
 {
     public async Task<IReadOnlyList<PanelDto>> ObtenerTodosAsync(
         CancellationToken cancellationToken = default)
@@ -72,7 +72,7 @@ public sealed class PanelService(
         {
             await tareasService.CrearAutomaticaAsync(
                 panel.Id,
-                panel.Estado,
+                panel.Estado.ToString(),
                 cancellationToken);
         }
 
@@ -113,7 +113,7 @@ public sealed class PanelService(
         {
             await tareasService.CrearAutomaticaAsync(
                 panelActual.Id,
-                panelActual.Estado,
+                panelActual.Estado.ToString(),
                 cancellationToken);
         }
 

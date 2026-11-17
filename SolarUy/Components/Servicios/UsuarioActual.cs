@@ -4,7 +4,7 @@ using SolarUy.Backend.Modulos.Parques.Aplicacion.Contratos;
 namespace SolarUy.Components.Servicios;
 
 public sealed class UsuarioActual(
-    AuthenticationStateProvider proveedorAutenticacion) : IUsuarioActual
+    AuthenticationStateProvider proveedorAutenticacion) : IUsuarioActual, SolarUy.Backend.Modulos.Tareas.Aplicacion.Contratos.IAccesoTareas
 {
     public async Task<bool> EstaAutenticadoAsync()
     {

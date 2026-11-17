@@ -1,4 +1,3 @@
-using SolarUy.Backend.Modulos.Mediciones.Dominio.Historial;
 
 namespace SolarUy.Backend.Modulos.Consultas.Aplicacion.DTOs;
 
