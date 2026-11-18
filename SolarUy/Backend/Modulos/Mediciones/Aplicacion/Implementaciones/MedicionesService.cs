@@ -28,11 +28,13 @@ public sealed class MedicionesService(ICatalogoProduccion catalogo, IMedicionRep
         ValidarAcceso(acceso);
         return sesiones.Crear(acceso.Propietario).Id;
     }
+    //peticion a servicio para obtener parques
     public Task<IReadOnlyList<ParqueProduccion>> ObtenerCatalogoAsync(AccesoProduccion acceso, CancellationToken cancelacion)
     {
         ValidarAcceso(acceso);
         return catalogo.ObtenerAsync(acceso.EsAdministrador, cancelacion);
     }
+    
     public ChannelReader<VistaProduccion> Observar(AccesoProduccion acceso, Guid id) => ObtenerSesionAutorizada(acceso, id).Cambios.Reader;
 
     private static void PublicarVista(SesionProduccion sesion)

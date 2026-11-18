@@ -13,8 +13,10 @@ public sealed class MedicionesHub(MedicionesService servicio, ILogger<Mediciones
 {
     public Task Latido(Guid sesionId) => EjecutarAsync(() => servicio.LatidoAsync(
         AccesoProduccionActual.Desde(Context.User!), sesionId, Context.ConnectionId, Context.ConnectionAborted));
+    
     public Task RegistrarSensor(Guid sesionId) => EjecutarAsync(() => servicio.RegistrarSensorAsync(
         AccesoProduccionActual.Desde(Context.User!), sesionId, Context.ConnectionId, Context.ConnectionAborted));
+    
     public Task ConfirmarConfiguracion(Guid sesionId, long version, PanelMotorDto[] paneles) => EjecutarAsync(() =>
         servicio.ConfirmarAsync(AccesoProduccionActual.Desde(Context.User!), sesionId, Context.ConnectionId,
             version, paneles.Select(p => new PanelMotor(p.Id, p.PotenciaActual, p.Deshabilitado, p.RevisionEstado)).ToArray(),
