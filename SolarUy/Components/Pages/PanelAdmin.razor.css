@@ -25,7 +25,7 @@ a.quick-card:focus-visible { outline: 3px solid #086aff; outline-offset: 3px; }
 .quick-card strong { font-size: .97rem; font-weight: 750; margin-bottom: 8px; }
 .quick-card > span { color: #526886; font-size: .88rem; line-height: 1.5; margin-bottom: 16px; }
 .quick-card small { color: #46617f; font-size: .72rem; margin-top: auto; border-radius: 20px; background: #edf3fc; padding: 4px 9px; }
-.detail-grid { display: grid; grid-template-columns: .95fr 1.05fr; gap: 20px; margin-top: 20px; }
+.detail-grid { display: grid; grid-template-columns: minmax(0, 1fr); gap: 20px; margin-top: 20px; }
 .detail-grid > section { min-width: 0; }
 .section-heading { display: flex; justify-content: space-between; align-items: center; gap: 14px; flex-wrap: wrap; }
 .section-heading .eyebrow { margin: 0; }
@@ -34,19 +34,16 @@ a.quick-card:focus-visible { outline: 3px solid #086aff; outline-offset: 3px; }
 .empty-state img { width: 43px; height: 43px; object-fit: contain; opacity: .8; margin-bottom: 18px; }
 .empty-state h3 { font-size: 1.1rem; font-weight: 650; }
 .empty-state p { font-size: .88rem; color: #526886; line-height: 1.7; margin: 10px 0 0; }
-.assistant .section-heading { justify-content: center; text-align: center; }
-.assistant .empty-state { padding: 20px 12px 0; }
-.assistant .empty-state img { margin-bottom: 12px; }
-.assistant-badge { display: inline-block; margin-top: 14px; padding: 4px 12px; border-radius: 20px; background: #edf3fc; color: #46617f; font-size: .75rem; font-weight: 600; }
-.assistant .assistant-description { margin-top: 6px; font-size: .8rem; }
-.assistant-link { display: inline-block; max-width: 100%; margin-top: 16px; padding: 10px 20px; border: 1px solid #0866f1; border-radius: 8px; background: #0866f1; color: #fff; font-size: .88rem; font-weight: 600; text-decoration: none; }
+.assistant { display: grid; grid-template-columns: 58px minmax(0, 1fr) auto; align-items: center; gap: 18px; min-height: 130px; }
+.assistant-icon { width: 58px; height: 58px; object-fit: contain; }
+.assistant-copy { min-width: 0; }
+.assistant-copy h2 { font-size: 1rem; font-weight: 750; margin: 0 0 6px; }
+.assistant-copy p { color: #526886; font-size: .88rem; line-height: 1.6; margin: 0; }
+.assistant-link { display: inline-block; max-width: 100%; padding: 10px 20px; border: 1px solid #0866f1; border-radius: 8px; background: #0866f1; color: #fff; font-size: .88rem; font-weight: 600; text-decoration: none; text-align: center; }
 .assistant-link:hover { background: #0756cd; border-color: #0756cd; color: #fff; }
 .assistant-link:focus-visible { outline: 3px solid #086aff; outline-offset: 3px; }
-.production select { background: #f8faff; color: #526886; border: 1px solid #dce6f3; border-radius: 8px; font-size: .78rem; padding: 8px; max-width: 100%; }
-.production figure { margin: 20px 0 0; }
-.production figure img { width: 100%; height: auto; display: block; border-radius: 8px; }
-.production figcaption { margin-top: 12px; color: #526886; font-size: .75rem; text-align: center; }
 button:disabled, select:disabled { cursor: not-allowed; opacity: 1; }
 @media (max-width: 1200px) { .quick-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); } .summary-card { padding: 20px 16px; gap: 12px; } .summary-card > img { width: 40px; height: 40px; } .summary-card strong { font-size: 1.3rem; } .hero-status { flex-basis: 195px; } }
-@media (max-width: 1000px) { .detail-grid { grid-template-columns: 1fr; } .admin-hero { flex-wrap: wrap; } .hero-status { flex-basis: 100%; padding: 16px; } .hero-status > span:last-child { margin-top: 5px; } }
+@media (max-width: 1000px) { .admin-hero { flex-wrap: wrap; } .hero-status { flex-basis: 100%; padding: 16px; } .hero-status > span:last-child { margin-top: 5px; } }
 @media (max-width: 600px) { .admin-hero { padding: 24px 20px; } .summary-grid { grid-template-columns: 1fr; gap: 12px; } .summary-card { padding: 20px; } .summary-card > img { width: 52px; height: 52px; } .summary-card strong { font-size: 1.5rem; } .quick-grid { grid-template-columns: 1fr; } .admin-card { padding: 20px; } .quick-section > h2 { font-size: 1.4rem; } }
+@media (max-width: 600px) { .assistant { grid-template-columns: 52px minmax(0, 1fr); gap: 16px; } .assistant-icon { width: 52px; height: 52px; } .assistant-link { grid-column: 2; justify-self: start; } }
